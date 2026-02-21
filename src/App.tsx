@@ -10,6 +10,8 @@ import Dashboard from "./pages/Dashboard";
 import Builder from "./pages/Builder";
 import WebsitePreview from "./pages/WebsitePreview";
 import Settings from "./pages/Settings";
+import AdminDashboard from "./pages/AdminDashboard";
+import PublicSite from "./pages/PublicSite";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +30,8 @@ const App = () => (
           <Route path="/builder" element={<Builder />} />
           <Route path="/builder/:id" element={<WebsitePreview />} />
           <Route path="/settings" element={<Settings />} />
+          <Route path="/admin" element={<AdminDashboard />} />
+          <Route path="/site/:id" element={<PublicSite />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
