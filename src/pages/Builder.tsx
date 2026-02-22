@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -31,6 +31,7 @@ const LOGO_STYLES = ["Modern", "Classic", "Creative", "Minimalist"];
 const Builder = () => {
   const [step, setStep] = useState(1);
   const [generating, setGenerating] = useState(false);
+  const [accessChecked, setAccessChecked] = useState(false);
   const [form, setForm] = useState({
     businessName: "",
     businessType: "",
@@ -44,6 +45,26 @@ const Builder = () => {
   });
   const navigate = useNavigate();
   const { toast } = useToast();
+
+  // Check payment access
+  useEffect(() => {
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!session) { navigate("/login"); return; }
+      supabase
+        .from("profiles")
+        .select("payment_confirmed")
+        .eq("user_id", session.user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (!data?.payment_confirmed) {
+            toast({ title: "Payment required", description: "Your payment must be confirmed before creating websites.", variant: "destructive" });
+            navigate("/dashboard");
+          } else {
+            setAccessChecked(true);
+          }
+        });
+    });
+  }, [navigate, toast]);
 
   const updateForm = (key: string, value: string) => setForm((p) => ({ ...p, [key]: value }));
   const updateSocial = (key: string, value: string) =>
@@ -120,6 +141,14 @@ const Builder = () => {
       setGenerating(false);
     }
   };
+
+  if (!accessChecked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
