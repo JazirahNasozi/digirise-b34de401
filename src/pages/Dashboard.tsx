@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import {
   Plus, Globe, Settings, LogOut, Sparkles, LayoutDashboard,
-  Clock, CheckCircle, FileText,
+  Clock, CheckCircle, FileText, Lock,
 } from "lucide-react";
 
 interface Website {
@@ -23,6 +23,8 @@ const Dashboard = () => {
   const [user, setUser] = useState<User | null>(null);
   const [websites, setWebsites] = useState<Website[]>([]);
   const [loading, setLoading] = useState(true);
+  const [paymentConfirmed, setPaymentConfirmed] = useState(false);
+  const [checkingPayment, setCheckingPayment] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -41,6 +43,31 @@ const Dashboard = () => {
         return;
       }
       setUser(session.user);
+
+      // Check if admin → redirect
+      supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id)
+        .eq("role", "admin")
+        .then(({ data: roles }) => {
+          if (roles && roles.length > 0) {
+            navigate("/admin");
+            return;
+          }
+        });
+
+      // Check payment status
+      supabase
+        .from("profiles")
+        .select("payment_confirmed")
+        .eq("user_id", session.user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          setPaymentConfirmed(data?.payment_confirmed ?? false);
+          setCheckingPayment(false);
+        });
+
       fetchWebsites();
     });
 
@@ -66,9 +93,21 @@ const Dashboard = () => {
     navigate("/");
   };
 
+  const handleCreateClick = () => {
+    if (!paymentConfirmed) {
+      toast({
+        title: "Payment required",
+        description: "Please contact the admin to confirm your payment before creating websites.",
+        variant: "destructive",
+      });
+      return;
+    }
+    navigate("/builder");
+  };
+
   const statusIcon = (status: string) => {
-    if (status === "published") return <CheckCircle className="h-4 w-4 text-green-500" />;
-    return <Clock className="h-4 w-4 text-primary" />;
+    if (status === "published") return <CheckCircle className="h-4 w-4 text-primary" />;
+    return <Clock className="h-4 w-4 text-muted-foreground" />;
   };
 
   return (
@@ -104,18 +143,47 @@ const Dashboard = () => {
           <p className="text-muted-foreground">Manage your AI-generated websites</p>
         </motion.div>
 
+        {/* Payment banner */}
+        {!checkingPayment && !paymentConfirmed && (
+          <motion.div
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-6 p-4 rounded-xl bg-destructive/10 border border-destructive/20 flex items-center gap-3"
+          >
+            <Lock className="h-5 w-5 text-destructive flex-shrink-0" />
+            <div>
+              <p className="text-sm font-semibold text-foreground">Payment pending</p>
+              <p className="text-sm text-muted-foreground">
+                Please complete your payment. Contact the admin to confirm your subscription to unlock website creation.
+              </p>
+            </div>
+          </motion.div>
+        )}
+
         {/* Action Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            onClick={() => navigate("/builder")}
-            className="cursor-pointer group gold-gradient rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all gold-glow"
+            onClick={handleCreateClick}
+            className={`cursor-pointer group rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all ${
+              paymentConfirmed
+                ? "gold-gradient gold-glow"
+                : "bg-muted border border-border"
+            }`}
           >
-            <Plus className="h-10 w-10 text-primary-foreground mb-3 group-hover:scale-110 transition-transform" />
-            <h3 className="text-xl font-display font-bold text-primary-foreground">Create Website</h3>
-            <p className="text-primary-foreground/80 text-sm mt-1">Let AI build your perfect site</p>
+            {paymentConfirmed ? (
+              <Plus className="h-10 w-10 text-primary-foreground mb-3 group-hover:scale-110 transition-transform" />
+            ) : (
+              <Lock className="h-10 w-10 text-muted-foreground mb-3" />
+            )}
+            <h3 className={`text-xl font-display font-bold ${paymentConfirmed ? "text-primary-foreground" : "text-muted-foreground"}`}>
+              Create Website
+            </h3>
+            <p className={`text-sm mt-1 ${paymentConfirmed ? "text-primary-foreground/80" : "text-muted-foreground"}`}>
+              {paymentConfirmed ? "Let AI build your perfect site" : "Payment required to unlock"}
+            </p>
           </motion.div>
 
           <motion.div
@@ -165,8 +233,9 @@ const Dashboard = () => {
               </h3>
               <p className="text-muted-foreground mb-6">Create your first AI-powered website in minutes</p>
               <Button
-                onClick={() => navigate("/builder")}
+                onClick={handleCreateClick}
                 className="gold-gradient text-primary-foreground gold-glow"
+                disabled={!paymentConfirmed}
               >
                 <Plus className="h-4 w-4 mr-2" /> Create Your First Website
               </Button>

@@ -22,11 +22,24 @@ const Login = () => {
       return;
     }
     setLoading(true);
-    const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
     setLoading(false);
     if (error) {
       toast({ title: "Login failed", description: error.message, variant: "destructive" });
     } else {
+      // Check if admin
+      const userId = data.user?.id;
+      if (userId) {
+        const { data: roles } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId)
+          .eq("role", "admin");
+        if (roles && roles.length > 0) {
+          navigate("/admin");
+          return;
+        }
+      }
       navigate("/dashboard");
     }
   };
