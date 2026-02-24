@@ -180,64 +180,109 @@ const AdminDashboard = () => {
               <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-border bg-muted/50">
-                    <th className="text-left p-4 font-semibold">Email</th>
-                    <th className="text-left p-4 font-semibold">Business</th>
-                    <th className="text-left p-4 font-semibold">Websites</th>
-                    <th className="text-left p-4 font-semibold">Joined</th>
-                    <th className="text-left p-4 font-semibold">Payment</th>
-                    <th className="text-left p-4 font-semibold">Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {profiles.map((p) => (
-                    <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
-                      <td className="p-4 font-medium">{p.email}</td>
-                      <td className="p-4 text-muted-foreground">{p.business_name || "—"}</td>
-                      <td className="p-4">
-                        <span className="bg-primary/10 text-primary text-xs font-semibold px-2 py-1 rounded-full">
-                          {getUserWebsiteCount(p.user_id)}
+            <>
+              {/* Mobile Cards */}
+              <div className="md:hidden divide-y divide-border">
+                {profiles.map((p) => (
+                  <div key={p.id} className="p-4 space-y-3">
+                    <div className="flex items-center justify-between">
+                      <span className="font-medium text-sm truncate">{p.email}</span>
+                      {p.payment_confirmed ? (
+                        <span className="inline-flex items-center gap-1 text-green-600 text-xs font-semibold">
+                          <CheckCircle className="h-3.5 w-3.5" /> Confirmed
                         </span>
-                      </td>
-                      <td className="p-4 text-muted-foreground">
-                        {new Date(p.created_at).toLocaleDateString()}
-                      </td>
-                      <td className="p-4">
-                        {p.payment_confirmed ? (
-                          <span className="inline-flex items-center gap-1 text-green-600 text-xs font-semibold">
-                            <CheckCircle className="h-3.5 w-3.5" /> Confirmed
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-muted-foreground text-xs">
-                            <XCircle className="h-3.5 w-3.5" /> Pending
-                          </span>
-                        )}
-                      </td>
-                      <td className="p-4">
-                        <Button
-                          size="sm"
-                          variant={p.payment_confirmed ? "outline" : "default"}
-                          className={!p.payment_confirmed ? "gold-gradient text-primary-foreground" : ""}
-                          disabled={toggling === p.id}
-                          onClick={() => togglePayment(p)}
-                        >
-                          {toggling === p.id ? (
-                            <Loader2 className="h-3 w-3 animate-spin" />
-                          ) : p.payment_confirmed ? (
-                            "Revoke"
-                          ) : (
-                            "Confirm Payment"
-                          )}
-                        </Button>
-                      </td>
+                      ) : (
+                        <span className="inline-flex items-center gap-1 text-muted-foreground text-xs">
+                          <XCircle className="h-3.5 w-3.5" /> Pending
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
+                      <span>{p.business_name || "No business"}</span>
+                      <span>•</span>
+                      <span>{getUserWebsiteCount(p.user_id)} sites</span>
+                      <span>•</span>
+                      <span>{new Date(p.created_at).toLocaleDateString()}</span>
+                    </div>
+                    <Button
+                      size="sm"
+                      variant={p.payment_confirmed ? "outline" : "default"}
+                      className={`w-full ${!p.payment_confirmed ? "gold-gradient text-primary-foreground" : ""}`}
+                      disabled={toggling === p.id}
+                      onClick={() => togglePayment(p)}
+                    >
+                      {toggling === p.id ? (
+                        <Loader2 className="h-3 w-3 animate-spin" />
+                      ) : p.payment_confirmed ? (
+                        "Revoke"
+                      ) : (
+                        "Confirm Payment"
+                      )}
+                    </Button>
+                  </div>
+                ))}
+              </div>
+
+              {/* Desktop Table */}
+              <div className="hidden md:block overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-border bg-muted/50">
+                      <th className="text-left p-4 font-semibold">Email</th>
+                      <th className="text-left p-4 font-semibold">Business</th>
+                      <th className="text-left p-4 font-semibold">Websites</th>
+                      <th className="text-left p-4 font-semibold">Joined</th>
+                      <th className="text-left p-4 font-semibold">Payment</th>
+                      <th className="text-left p-4 font-semibold">Actions</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                  </thead>
+                  <tbody>
+                    {profiles.map((p) => (
+                      <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
+                        <td className="p-4 font-medium">{p.email}</td>
+                        <td className="p-4 text-muted-foreground">{p.business_name || "—"}</td>
+                        <td className="p-4">
+                          <span className="bg-primary/10 text-primary text-xs font-semibold px-2 py-1 rounded-full">
+                            {getUserWebsiteCount(p.user_id)}
+                          </span>
+                        </td>
+                        <td className="p-4 text-muted-foreground">
+                          {new Date(p.created_at).toLocaleDateString()}
+                        </td>
+                        <td className="p-4">
+                          {p.payment_confirmed ? (
+                            <span className="inline-flex items-center gap-1 text-green-600 text-xs font-semibold">
+                              <CheckCircle className="h-3.5 w-3.5" /> Confirmed
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 text-muted-foreground text-xs">
+                              <XCircle className="h-3.5 w-3.5" /> Pending
+                            </span>
+                          )}
+                        </td>
+                        <td className="p-4">
+                          <Button
+                            size="sm"
+                            variant={p.payment_confirmed ? "outline" : "default"}
+                            className={!p.payment_confirmed ? "gold-gradient text-primary-foreground" : ""}
+                            disabled={toggling === p.id}
+                            onClick={() => togglePayment(p)}
+                          >
+                            {toggling === p.id ? (
+                              <Loader2 className="h-3 w-3 animate-spin" />
+                            ) : p.payment_confirmed ? (
+                              "Revoke"
+                            ) : (
+                              "Confirm Payment"
+                            )}
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </>
           )}
         </div>
       </main>

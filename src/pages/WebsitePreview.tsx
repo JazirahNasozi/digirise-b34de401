@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, ArrowLeft, Download, Eye, Loader2, CheckCircle, Copy } from "lucide-react";
+import { Sparkles, ArrowLeft, Download, Eye, Loader2, CheckCircle, Copy, Lock } from "lucide-react";
 
 interface WebsiteData {
   id: string;
@@ -45,6 +45,26 @@ const WebsitePreview = () => {
 
   const handlePublish = async () => {
     if (!website) return;
+
+    // Check payment status before publishing
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { navigate("/login"); return; }
+
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("payment_confirmed")
+      .eq("user_id", session.user.id)
+      .maybeSingle();
+
+    if (!profile?.payment_confirmed) {
+      toast({
+        title: "Payment required",
+        description: "Please contact the admin to confirm your payment before publishing.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setPublishing(true);
     const publicUrl = `${window.location.origin}/site/${website.id}`;
     const { error } = await supabase
