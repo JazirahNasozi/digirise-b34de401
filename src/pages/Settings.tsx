@@ -6,13 +6,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, ArrowLeft, Save, Mail, Lock, User } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { Sparkles, ArrowLeft, Save, Mail, Lock, User, Trash2 } from "lucide-react";
 
 const Settings = () => {
   const [email, setEmail] = useState("");
   const [fullName, setFullName] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -49,6 +61,25 @@ const Settings = () => {
       toast({ title: "Update failed", description: err.message, variant: "destructive" });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("delete-user", {
+        body: { action: "delete-self" },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+
+      await supabase.auth.signOut();
+      toast({ title: "Account deleted", description: "Your account has been permanently removed." });
+      navigate("/");
+    } catch (err: any) {
+      toast({ title: "Failed to delete account", description: err.message, variant: "destructive" });
+    } finally {
+      setDeleting(false);
     }
   };
 
@@ -110,6 +141,40 @@ const Settings = () => {
               <Save className="mr-2 h-4 w-4" />
               {loading ? "Saving..." : "Save Changes"}
             </Button>
+          </div>
+
+          {/* Danger Zone */}
+          <div className="mt-8 bg-card rounded-2xl border border-destructive/30 p-6">
+            <h2 className="text-lg font-display font-bold text-destructive mb-2">Danger Zone</h2>
+            <p className="text-sm text-muted-foreground mb-4">
+              Permanently delete your account and all associated data. This action cannot be undone.
+            </p>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" className="w-full h-12 font-semibold">
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete Account
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    This will permanently delete your account, all your websites, and all associated data. This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleDeleteAccount}
+                    disabled={deleting}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    {deleting ? "Deleting..." : "Yes, delete my account"}
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           </div>
         </motion.div>
       </main>
