@@ -4,6 +4,11 @@ import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
 
 const getShowcaseImages = (content: any, name: string): string[] => {
+  // Prioritize user-uploaded images
+  if (Array.isArray(content?.user_images) && content.user_images.length > 0) {
+    return content.user_images;
+  }
+
   const configuredImages = [
     content?.hero?.image,
     content?.hero?.image_url,
@@ -11,7 +16,7 @@ const getShowcaseImages = (content: any, name: string): string[] => {
     ...(Array.isArray(content?.gallery?.images) ? content.gallery.images : []),
   ].filter((url): url is string => typeof url === "string" && url.length > 0);
 
-  if (configuredImages.length > 0) return configuredImages.slice(0, 3);
+  if (configuredImages.length > 0) return configuredImages.slice(0, 6);
 
   const seed = encodeURIComponent(name || "business-site");
   return [
@@ -163,4 +168,3 @@ const PublicSite = () => {
 };
 
 export default PublicSite;
-
