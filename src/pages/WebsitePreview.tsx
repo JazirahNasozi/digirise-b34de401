@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, ArrowLeft, Download, Eye, Loader2, CheckCircle, Copy, Lock } from "lucide-react";
+import { Sparkles, ArrowLeft, Download, Eye, Loader2, CheckCircle, Copy, Mail } from "lucide-react";
 
 interface WebsiteData {
   id: string;
@@ -16,39 +16,85 @@ interface WebsiteData {
   published_url: string | null;
 }
 
+const ADMIN_PAYMENT_EMAIL = "ellyjazmine@gmail.com";
+
+const getShowcaseImages = (content: any, website: WebsiteData | null): string[] => {
+  const configuredImages = [
+    content?.hero?.image,
+    content?.hero?.image_url,
+    ...(Array.isArray(content?.images) ? content.images : []),
+    ...(Array.isArray(content?.gallery?.images) ? content.gallery.images : []),
+  ].filter((url): url is string => typeof url === "string" && url.length > 0);
+
+  if (configuredImages.length > 0) return configuredImages.slice(0, 3);
+
+  const seed = encodeURIComponent(`${website?.business_type || "business"}-${website?.name || "site"}`);
+  return [
+    `https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1200&q=80&${seed}`,
+    `https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80&${seed}`,
+    `https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80&${seed}`,
+  ];
+};
+
 const WebsitePreview = () => {
   const { id } = useParams<{ id: string }>();
   const [website, setWebsite] = useState<WebsiteData | null>(null);
   const [loading, setLoading] = useState(true);
   const [publishing, setPublishing] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [paymentConfirmed, setPaymentConfirmed] = useState<boolean | null>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     if (!id) return;
-    supabase
-      .from("websites")
-      .select("*")
-      .eq("id", id)
-      .maybeSingle()
-      .then(({ data, error }) => {
-        if (error || !data) {
-          toast({ title: "Website not found", variant: "destructive" });
-          navigate("/dashboard");
-          return;
-        }
-        setWebsite(data as WebsiteData);
-        setLoading(false);
-      });
+
+    const loadData = async () => {
+      const [{ data, error }, { data: authData }] = await Promise.all([
+        supabase.from("websites").select("*").eq("id", id).maybeSingle(),
+        supabase.auth.getSession(),
+      ]);
+
+      if (error || !data) {
+        toast({ title: "Website not found", variant: "destructive" });
+        navigate("/dashboard");
+        return;
+      }
+
+      setWebsite(data as WebsiteData);
+
+      const session = authData.session;
+      if (session) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("payment_confirmed")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+        setPaymentConfirmed(Boolean(profile?.payment_confirmed));
+      }
+
+      setLoading(false);
+    };
+
+    loadData();
   }, [id, navigate, toast]);
+
+  const showcaseImages = useMemo(
+    () => getShowcaseImages(website?.generated_content, website),
+    [website]
+  );
 
   const handlePublish = async () => {
     if (!website) return;
 
     // Check payment status before publishing
-    const { data: { session } } = await supabase.auth.getSession();
-    if (!session) { navigate("/login"); return; }
+    const {
+      data: { session },
+    } = await supabase.auth.getSession();
+    if (!session) {
+      navigate("/login");
+      return;
+    }
 
     const { data: profile } = await supabase
       .from("profiles")
@@ -56,7 +102,10 @@ const WebsitePreview = () => {
       .eq("user_id", session.user.id)
       .maybeSingle();
 
-    if (!profile?.payment_confirmed) {
+    const isPaid = Boolean(profile?.payment_confirmed);
+    setPaymentConfirmed(isPaid);
+
+    if (!isPaid) {
       toast({
         title: "Payment required",
         description: "Please contact the admin to confirm your payment before publishing.",
@@ -75,7 +124,7 @@ const WebsitePreview = () => {
     if (error) {
       toast({ title: "Publish failed", description: error.message, variant: "destructive" });
     } else {
-      setWebsite((w) => w ? { ...w, status: "published", published_url: publicUrl } : w);
+      setWebsite((w) => (w ? { ...w, status: "published", published_url: publicUrl } : w));
       toast({ title: "Website published!", description: "Your site is now live." });
     }
     setPublishing(false);
@@ -92,6 +141,7 @@ const WebsitePreview = () => {
     if (!website?.generated_content) return;
     setExporting(true);
     const content = website.generated_content as any;
+    const exportImages = getShowcaseImages(content, website);
 
     const html = `<!DOCTYPE html>
 <html lang="en">
@@ -99,13 +149,16 @@ const WebsitePreview = () => {
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${content.seo?.title || website.name}</title>
-  <meta name="description" content="${content.seo?.description || ''}">
+  <meta name="description" content="${content.seo?.description || ""}">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1a1a2e; }
     .hero { background: linear-gradient(135deg, #D4A017, #B8860B); color: white; padding: 80px 20px; text-align: center; }
     .hero h1 { font-size: 2.5rem; margin-bottom: 16px; }
     .hero p { font-size: 1.1rem; opacity: 0.9; max-width: 600px; margin: 0 auto; }
+    .gallery { padding: 32px 20px; background: #ffffff; }
+    .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; max-width: 1000px; margin: 0 auto; }
+    .gallery-grid img { width: 100%; height: 210px; object-fit: cover; border-radius: 12px; }
     .section { padding: 60px 20px; max-width: 900px; margin: 0 auto; text-align: center; }
     .section h2 { font-size: 2rem; margin-bottom: 16px; }
     .section p { color: #555; line-height: 1.7; }
@@ -124,11 +177,14 @@ const WebsitePreview = () => {
 <body>
   <div class="hero">
     <h1>${content.hero?.heading || website.name}</h1>
-    <p>${content.hero?.subheading || ''}</p>
+    <p>${content.hero?.subheading || ""}</p>
   </div>
-  ${content.about ? `<div class="section"><h2>${content.about.heading || 'About Us'}</h2><p>${content.about.text}</p></div>` : ''}
-  ${content.services ? `<div class="services"><h2 style="text-align:center;font-size:2rem;margin-bottom:16px;">${content.services.heading || 'Our Services'}</h2><div class="services-grid">${(content.services.items || []).map((s: any) => `<div class="service-card"><h3>${s.title}</h3><p>${s.description}</p></div>`).join('')}</div></div>` : ''}
-  ${content.contact ? `<div class="contact"><h2>${content.contact.heading || 'Contact Us'}</h2>${content.contact.phone ? `<p>📞 ${content.contact.phone}</p>` : ''}${content.contact.email ? `<p>✉️ ${content.contact.email}</p>` : ''}${content.contact.address ? `<p>📍 ${content.contact.address}</p>` : ''}</div>` : ''}
+  ${exportImages.length ? `<section class="gallery"><div class="gallery-grid">${exportImages
+      .map((image: string, idx: number) => `<img src="${image}" alt="${website.name} showcase image ${idx + 1}" loading="lazy" />`)
+      .join("")}</div></section>` : ""}
+  ${content.about ? `<div class="section"><h2>${content.about.heading || "About Us"}</h2><p>${content.about.text}</p></div>` : ""}
+  ${content.services ? `<div class="services"><h2 style="text-align:center;font-size:2rem;margin-bottom:16px;">${content.services.heading || "Our Services"}</h2><div class="services-grid">${(content.services.items || []).map((s: any) => `<div class="service-card"><h3>${s.title}</h3><p>${s.description}</p></div>`).join("")}</div></div>` : ""}
+  ${content.contact ? `<div class="contact"><h2>${content.contact.heading || "Contact Us"}</h2>${content.contact.phone ? `<p>📞 ${content.contact.phone}</p>` : ""}${content.contact.email ? `<p>✉️ ${content.contact.email}</p>` : ""}${content.contact.address ? `<p>📍 ${content.contact.address}</p>` : ""}</div>` : ""}
   <div class="footer"><p>&copy; ${new Date().getFullYear()} ${website.name}. Built with DigiRise.</p></div>
 </body>
 </html>`;
@@ -161,6 +217,24 @@ const WebsitePreview = () => {
             {content.hero?.subheading || "Welcome to our business"}
           </p>
         </div>
+
+        {/* Showcase Images */}
+        {showcaseImages.length > 0 && (
+          <section className="p-8 md:p-10 bg-card">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
+              {showcaseImages.map((image, index) => (
+                <div key={image + index} className="overflow-hidden rounded-xl border border-border bg-background">
+                  <img
+                    src={image}
+                    alt={`${website.name} showcase ${index + 1}`}
+                    className="w-full h-56 object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* About */}
         {content.about && (
@@ -266,6 +340,22 @@ const WebsitePreview = () => {
             </div>
           </div>
 
+          {/* Payment confirmation contact */}
+          {website?.status !== "published" && paymentConfirmed === false && (
+            <section className="mb-6 p-4 rounded-xl border border-border bg-card">
+              <p className="text-sm font-semibold mb-1">Payment confirmation required before publishing</p>
+              <p className="text-sm text-muted-foreground mb-3">
+                Email the admin to confirm your payment, then click Publish again.
+              </p>
+              <a
+                href={`mailto:${ADMIN_PAYMENT_EMAIL}?subject=Payment%20Confirmation%20Request&body=Hi%20Admin,%20please%20confirm%20my%20payment%20for%20website%20publishing.`}
+                className="inline-flex items-center gap-2 text-sm text-primary underline"
+              >
+                <Mail className="h-4 w-4" /> {ADMIN_PAYMENT_EMAIL}
+              </a>
+            </section>
+          )}
+
           {/* Published URL banner */}
           {website?.status === "published" && website.published_url && (
             <div className="mb-6 p-4 rounded-xl bg-primary/5 border border-primary/20 flex items-center gap-3">
@@ -292,3 +382,4 @@ const WebsitePreview = () => {
 };
 
 export default WebsitePreview;
+
