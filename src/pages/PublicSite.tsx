@@ -1,7 +1,25 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2 } from "lucide-react";
+
+const getShowcaseImages = (content: any, name: string): string[] => {
+  const configuredImages = [
+    content?.hero?.image,
+    content?.hero?.image_url,
+    ...(Array.isArray(content?.images) ? content.images : []),
+    ...(Array.isArray(content?.gallery?.images) ? content.gallery.images : []),
+  ].filter((url): url is string => typeof url === "string" && url.length > 0);
+
+  if (configuredImages.length > 0) return configuredImages.slice(0, 3);
+
+  const seed = encodeURIComponent(name || "business-site");
+  return [
+    `https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1200&q=80&${seed}`,
+    `https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80&${seed}`,
+    `https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80&${seed}`,
+  ];
+};
 
 const PublicSite = () => {
   const { id } = useParams<{ id: string }>();
@@ -30,6 +48,8 @@ const PublicSite = () => {
       });
   }, [id]);
 
+  const showcaseImages = useMemo(() => getShowcaseImages(content, name), [content, name]);
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -52,26 +72,44 @@ const PublicSite = () => {
   return (
     <div className="min-h-screen bg-background">
       {/* Hero */}
-      <div className="gold-gradient p-16 text-center">
+      <header className="gold-gradient p-16 text-center">
         <h1 className="text-4xl md:text-6xl font-display font-bold text-primary-foreground mb-4">
           {content?.hero?.heading || name}
         </h1>
         <p className="text-lg md:text-xl text-primary-foreground/80 max-w-2xl mx-auto">
           {content?.hero?.subheading || "Welcome"}
         </p>
-      </div>
+      </header>
+
+      {/* Showcase Images */}
+      {showcaseImages.length > 0 && (
+        <section className="p-8 md:p-12 bg-card">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
+            {showcaseImages.map((image, index) => (
+              <div key={image + index} className="overflow-hidden rounded-xl border border-border bg-background">
+                <img
+                  src={image}
+                  alt={`${name} showcase image ${index + 1}`}
+                  className="w-full h-56 object-cover"
+                  loading="lazy"
+                />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {/* About */}
       {content?.about && (
-        <div className="p-12 md:p-16 text-center max-w-4xl mx-auto">
+        <section className="p-12 md:p-16 text-center max-w-4xl mx-auto">
           <h2 className="text-3xl font-display font-bold mb-4">{content.about.heading || "About Us"}</h2>
           <p className="text-muted-foreground leading-relaxed">{content.about.text}</p>
-        </div>
+        </section>
       )}
 
       {/* Services */}
       {content?.services && (
-        <div className="p-12 md:p-16 bg-card">
+        <section className="p-12 md:p-16 bg-card">
           <h2 className="text-3xl font-display font-bold text-center mb-10">
             {content.services.heading || "Our Services"}
           </h2>
@@ -83,12 +121,12 @@ const PublicSite = () => {
               </div>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {/* Testimonials */}
       {content?.testimonials && content.testimonials.length > 0 && (
-        <div className="p-12 md:p-16">
+        <section className="p-12 md:p-16">
           <h2 className="text-3xl font-display font-bold text-center mb-10">What Our Clients Say</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
             {content.testimonials.map((t: any, i: number) => (
@@ -99,29 +137,30 @@ const PublicSite = () => {
               </div>
             ))}
           </div>
-        </div>
+        </section>
       )}
 
       {/* Contact */}
       {content?.contact && (
-        <div className="p-12 md:p-16 bg-card text-center">
+        <section className="p-12 md:p-16 bg-card text-center">
           <h2 className="text-3xl font-display font-bold mb-6">{content.contact.heading || "Contact Us"}</h2>
           <div className="space-y-2 text-muted-foreground">
             {content.contact.phone && <p>📞 {content.contact.phone}</p>}
             {content.contact.email && <p>✉️ {content.contact.email}</p>}
             {content.contact.address && <p>📍 {content.contact.address}</p>}
           </div>
-        </div>
+        </section>
       )}
 
       {/* Footer */}
-      <div className="charcoal-gradient p-6 text-center">
+      <footer className="charcoal-gradient p-6 text-center">
         <p className="text-secondary-foreground/60 text-sm">
           © {new Date().getFullYear()} {name}. Built with DigiRise.
         </p>
-      </div>
+      </footer>
     </div>
   );
 };
 
 export default PublicSite;
+
