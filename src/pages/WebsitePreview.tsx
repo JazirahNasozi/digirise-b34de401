@@ -1,10 +1,11 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { Sparkles, ArrowLeft, Download, Eye, Loader2, CheckCircle, Copy, Mail } from "lucide-react";
+import WebsiteImageManager from "@/components/WebsiteImageManager";
 
 interface WebsiteData {
   id: string;
@@ -18,7 +19,9 @@ interface WebsiteData {
 
 const ADMIN_PAYMENT_EMAIL = "ellyjazmine@gmail.com";
 
-const getShowcaseImages = (content: any, website: WebsiteData | null): string[] => {
+const getShowcaseImages = (content: any, website: WebsiteData | null, userImages: string[]): string[] => {
+  if (userImages.length > 0) return userImages;
+
   const configuredImages = [
     content?.hero?.image,
     content?.hero?.image_url,
@@ -26,7 +29,7 @@ const getShowcaseImages = (content: any, website: WebsiteData | null): string[] 
     ...(Array.isArray(content?.gallery?.images) ? content.gallery.images : []),
   ].filter((url): url is string => typeof url === "string" && url.length > 0);
 
-  if (configuredImages.length > 0) return configuredImages.slice(0, 3);
+  if (configuredImages.length > 0) return configuredImages.slice(0, 6);
 
   const seed = encodeURIComponent(`${website?.business_type || "business"}-${website?.name || "site"}`);
   return [
@@ -43,6 +46,7 @@ const WebsitePreview = () => {
   const [publishing, setPublishing] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [paymentConfirmed, setPaymentConfirmed] = useState<boolean | null>(null);
+  const [userImages, setUserImages] = useState<string[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -62,6 +66,8 @@ const WebsitePreview = () => {
       }
 
       setWebsite(data as WebsiteData);
+      const gc = data.generated_content as any;
+      setUserImages(Array.isArray(gc?.user_images) ? gc.user_images : []);
 
       const session = authData.session;
       if (session) {
@@ -80,14 +86,30 @@ const WebsitePreview = () => {
   }, [id, navigate, toast]);
 
   const showcaseImages = useMemo(
-    () => getShowcaseImages(website?.generated_content, website),
+    () => getShowcaseImages(website?.generated_content, website, userImages),
+    [website, userImages]
+  );
+
+  const handleImagesChange = useCallback(
+    async (newImages: string[]) => {
+      setUserImages(newImages);
+      if (!website) return;
+      const gc = (website.generated_content as any) || {};
+      const updatedContent = { ...gc, user_images: newImages };
+      await supabase
+        .from("websites")
+        .update({ generated_content: updatedContent as any })
+        .eq("id", website.id);
+      setWebsite((w) =>
+        w ? { ...w, generated_content: updatedContent } : w
+      );
+    },
     [website]
   );
 
   const handlePublish = async () => {
     if (!website) return;
 
-    // Check payment status before publishing
     const {
       data: { session },
     } = await supabase.auth.getSession();
@@ -141,7 +163,7 @@ const WebsitePreview = () => {
     if (!website?.generated_content) return;
     setExporting(true);
     const content = website.generated_content as any;
-    const exportImages = getShowcaseImages(content, website);
+    const exportImages = getShowcaseImages(content, website, userImages);
 
     const html = `<!DOCTYPE html>
 <html lang="en">
@@ -340,6 +362,15 @@ const WebsitePreview = () => {
             </div>
           </div>
 
+          {/* Image Manager */}
+          {website && (
+            <WebsiteImageManager
+              websiteId={website.id}
+              images={userImages}
+              onImagesChange={handleImagesChange}
+            />
+          )}
+
           {/* Payment confirmation contact */}
           {website?.status !== "published" && paymentConfirmed === false && (
             <section className="mb-6 p-4 rounded-xl border border-border bg-card">
@@ -382,4 +413,3 @@ const WebsitePreview = () => {
 };
 
 export default WebsitePreview;
-
