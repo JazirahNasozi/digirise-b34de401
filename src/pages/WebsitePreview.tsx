@@ -1,11 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { Sparkles, ArrowLeft, Download, Eye, Loader2, CheckCircle, Copy, Mail } from "lucide-react";
+import {
+  Sparkles, ArrowLeft, Download, Eye, Loader2, CheckCircle, Copy, Mail, Palette,
+} from "lucide-react";
 import WebsiteImageManager from "@/components/WebsiteImageManager";
+import WebsiteRenderer from "@/components/website/WebsiteRenderer";
+import { COLOR_THEMES, getTheme } from "@/lib/theme-colors";
 
 interface WebsiteData {
   id: string;
@@ -19,26 +23,6 @@ interface WebsiteData {
 
 const ADMIN_PAYMENT_EMAIL = "ellyjazmine@gmail.com";
 
-const getShowcaseImages = (content: any, website: WebsiteData | null, userImages: string[]): string[] => {
-  if (userImages.length > 0) return userImages;
-
-  const configuredImages = [
-    content?.hero?.image,
-    content?.hero?.image_url,
-    ...(Array.isArray(content?.images) ? content.images : []),
-    ...(Array.isArray(content?.gallery?.images) ? content.gallery.images : []),
-  ].filter((url): url is string => typeof url === "string" && url.length > 0);
-
-  if (configuredImages.length > 0) return configuredImages.slice(0, 6);
-
-  const seed = encodeURIComponent(`${website?.business_type || "business"}-${website?.name || "site"}`);
-  return [
-    `https://images.unsplash.com/photo-1497366811353-6870744d04b2?auto=format&fit=crop&w=1200&q=80&${seed}`,
-    `https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=1200&q=80&${seed}`,
-    `https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=1200&q=80&${seed}`,
-  ];
-};
-
 const WebsitePreview = () => {
   const { id } = useParams<{ id: string }>();
   const [website, setWebsite] = useState<WebsiteData | null>(null);
@@ -47,6 +31,9 @@ const WebsitePreview = () => {
   const [exporting, setExporting] = useState(false);
   const [paymentConfirmed, setPaymentConfirmed] = useState<boolean | null>(null);
   const [userImages, setUserImages] = useState<string[]>([]);
+  const [selectedTheme, setSelectedTheme] = useState("gold");
+  const [showThemePicker, setShowThemePicker] = useState(false);
+  const imageManagerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -66,6 +53,7 @@ const WebsitePreview = () => {
       }
 
       setWebsite(data as WebsiteData);
+      setSelectedTheme(data.color_theme || "gold");
       const gc = data.generated_content as any;
       setUserImages(Array.isArray(gc?.user_images) ? gc.user_images : []);
 
@@ -85,11 +73,6 @@ const WebsitePreview = () => {
     loadData();
   }, [id, navigate, toast]);
 
-  const showcaseImages = useMemo(
-    () => getShowcaseImages(website?.generated_content, website, userImages),
-    [website, userImages]
-  );
-
   const handleImagesChange = useCallback(
     async (newImages: string[]) => {
       setUserImages(newImages);
@@ -100,23 +83,62 @@ const WebsitePreview = () => {
         .from("websites")
         .update({ generated_content: updatedContent as any })
         .eq("id", website.id);
-      setWebsite((w) =>
-        w ? { ...w, generated_content: updatedContent } : w
-      );
+      setWebsite((w) => (w ? { ...w, generated_content: updatedContent } : w));
     },
     [website]
   );
 
+  const handleContentChange = useCallback(
+    async (path: string, value: any) => {
+      if (!website) return;
+      const gc = { ...((website.generated_content as any) || {}) };
+
+      // Set nested value by dot path
+      const keys = path.split(".");
+      let obj = gc;
+      for (let i = 0; i < keys.length - 1; i++) {
+        const key = keys[i];
+        const nextKey = keys[i + 1];
+        if (!isNaN(Number(nextKey))) {
+          if (!Array.isArray(obj[key])) obj[key] = [];
+        } else {
+          if (!obj[key] || typeof obj[key] !== "object") obj[key] = {};
+        }
+        obj = obj[key];
+      }
+      const lastKey = keys[keys.length - 1];
+      if (!isNaN(Number(lastKey))) {
+        obj[Number(lastKey)] = value;
+      } else {
+        obj[lastKey] = value;
+      }
+
+      setWebsite((w) => (w ? { ...w, generated_content: gc } : w));
+
+      // Debounced save
+      await supabase
+        .from("websites")
+        .update({ generated_content: gc as any })
+        .eq("id", website.id);
+    },
+    [website]
+  );
+
+  const handleThemeChange = useCallback(
+    async (themeValue: string) => {
+      setSelectedTheme(themeValue);
+      if (!website) return;
+      await supabase.from("websites").update({ color_theme: themeValue }).eq("id", website.id);
+      setWebsite((w) => (w ? { ...w, color_theme: themeValue } : w));
+      toast({ title: "Theme updated!" });
+    },
+    [website, toast]
+  );
+
   const handlePublish = async () => {
     if (!website) return;
-
-    const {
-      data: { session },
-    } = await supabase.auth.getSession();
-    if (!session) {
-      navigate("/login");
-      return;
-    }
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) { navigate("/login"); return; }
 
     const { data: profile } = await supabase
       .from("profiles")
@@ -163,7 +185,8 @@ const WebsitePreview = () => {
     if (!website?.generated_content) return;
     setExporting(true);
     const content = website.generated_content as any;
-    const exportImages = getShowcaseImages(content, website, userImages);
+    const theme = getTheme(selectedTheme);
+    const socials = content.socialLinks || {};
 
     const html = `<!DOCTYPE html>
 <html lang="en">
@@ -172,28 +195,40 @@ const WebsitePreview = () => {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${content.seo?.title || website.name}</title>
   <meta name="description" content="${content.seo?.description || ""}">
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; color: #1a1a2e; }
-    .hero { background: linear-gradient(135deg, #D4A017, #B8860B); color: white; padding: 80px 20px; text-align: center; }
-    .hero h1 { font-size: 2.5rem; margin-bottom: 16px; }
-    .hero p { font-size: 1.1rem; opacity: 0.9; max-width: 600px; margin: 0 auto; }
-    .gallery { padding: 32px 20px; background: #ffffff; }
-    .gallery-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; max-width: 1000px; margin: 0 auto; }
-    .gallery-grid img { width: 100%; height: 210px; object-fit: cover; border-radius: 12px; }
-    .section { padding: 60px 20px; max-width: 900px; margin: 0 auto; text-align: center; }
-    .section h2 { font-size: 2rem; margin-bottom: 16px; }
-    .section p { color: #555; line-height: 1.7; }
-    .services { background: #f8f8f8; padding: 60px 20px; }
-    .services-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; max-width: 900px; margin: 24px auto 0; }
-    .service-card { background: white; border: 1px solid #eee; border-radius: 12px; padding: 24px; text-align: center; }
-    .service-card h3 { font-size: 1.1rem; margin-bottom: 8px; }
-    .service-card p { font-size: 0.9rem; color: #666; }
-    .contact { padding: 60px 20px; text-align: center; }
-    .contact h2 { font-size: 2rem; margin-bottom: 16px; }
-    .contact p { color: #555; margin: 4px 0; }
-    .footer { background: #1a1a2e; color: rgba(255,255,255,0.5); padding: 24px; text-align: center; font-size: 0.85rem; }
-    @media (max-width: 640px) { .hero h1 { font-size: 1.8rem; } .section h2 { font-size: 1.5rem; } }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',sans-serif;color:#1a1a2e;line-height:1.6}
+    h1,h2,h3{font-family:'Playfair Display',serif}
+    .hero{background:${theme.heroGradient};color:hsl(${theme.primaryForeground});padding:80px 20px;text-align:center}
+    .hero h1{font-size:clamp(2rem,5vw,3.5rem);margin-bottom:16px}
+    .hero p{font-size:1.1rem;opacity:.9;max-width:600px;margin:0 auto}
+    .gallery{padding:48px 20px}
+    .gallery-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;max-width:1100px;margin:0 auto}
+    .gallery-grid img{width:100%;height:220px;object-fit:cover;border-radius:12px}
+    .section{padding:64px 20px;max-width:900px;margin:0 auto;text-align:center}
+    .section h2{font-size:2rem;margin-bottom:20px}
+    .section p{color:#555}
+    .services{background:#f8f8f8;padding:64px 20px}
+    .services h2{text-align:center;font-size:2rem;margin-bottom:32px}
+    .services-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;max-width:1000px;margin:0 auto}
+    .service-card{background:#fff;border:1px solid #eee;border-radius:16px;padding:32px 24px;text-align:center}
+    .service-card h3{margin-bottom:8px}
+    .service-card p{font-size:.9rem;color:#666}
+    .testimonials{padding:64px 20px}
+    .testimonials h2{text-align:center;font-size:2rem;margin-bottom:32px}
+    .test-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;max-width:900px;margin:0 auto}
+    .test-card{background:#f9f9f9;border:1px solid #eee;border-radius:16px;padding:24px}
+    .test-card .quote{font-style:italic;color:#555;margin-bottom:12px}
+    .test-card .author{font-weight:600;font-size:.9rem}
+    .test-card .role{font-size:.8rem;color:#888}
+    .contact{padding:64px 20px;text-align:center;background:#f8f8f8}
+    .contact h2{font-size:2rem;margin-bottom:20px}
+    .contact p{color:#555;margin:6px 0}
+    .footer{background:#1a1a2e;color:rgba(255,255,255,.5);padding:24px;text-align:center;font-size:.85rem}
+    .social-links{display:flex;gap:16px;justify-content:center;margin-bottom:12px}
+    .social-links a{color:rgba(255,255,255,.6);text-decoration:none}
+    @media(max-width:640px){.hero{padding:48px 16px}.hero h1{font-size:1.8rem}}
   </style>
 </head>
 <body>
@@ -201,13 +236,15 @@ const WebsitePreview = () => {
     <h1>${content.hero?.heading || website.name}</h1>
     <p>${content.hero?.subheading || ""}</p>
   </div>
-  ${exportImages.length ? `<section class="gallery"><div class="gallery-grid">${exportImages
-      .map((image: string, idx: number) => `<img src="${image}" alt="${website.name} showcase image ${idx + 1}" loading="lazy" />`)
-      .join("")}</div></section>` : ""}
+  ${userImages.length > 0 ? `<section class="gallery"><div class="gallery-grid">${userImages.map((img: string, i: number) => `<img src="${img}" alt="${website.name} photo ${i + 1}" loading="lazy"/>`).join("")}</div></section>` : ""}
   ${content.about ? `<div class="section"><h2>${content.about.heading || "About Us"}</h2><p>${content.about.text}</p></div>` : ""}
-  ${content.services ? `<div class="services"><h2 style="text-align:center;font-size:2rem;margin-bottom:16px;">${content.services.heading || "Our Services"}</h2><div class="services-grid">${(content.services.items || []).map((s: any) => `<div class="service-card"><h3>${s.title}</h3><p>${s.description}</p></div>`).join("")}</div></div>` : ""}
+  ${content.services ? `<div class="services"><h2>${content.services.heading || "Our Services"}</h2><div class="services-grid">${(content.services.items || []).map((s: any) => `<div class="service-card"><h3>${s.title}</h3><p>${s.description}</p></div>`).join("")}</div></div>` : ""}
+  ${content.testimonials?.length ? `<div class="testimonials"><h2>What Our Clients Say</h2><div class="test-grid">${content.testimonials.map((t: any) => `<div class="test-card"><p class="quote">"${t.text}"</p><p class="author">${t.name}</p><p class="role">${t.role}</p></div>`).join("")}</div></div>` : ""}
   ${content.contact ? `<div class="contact"><h2>${content.contact.heading || "Contact Us"}</h2>${content.contact.phone ? `<p>📞 ${content.contact.phone}</p>` : ""}${content.contact.email ? `<p>✉️ ${content.contact.email}</p>` : ""}${content.contact.address ? `<p>📍 ${content.contact.address}</p>` : ""}</div>` : ""}
-  <div class="footer"><p>&copy; ${new Date().getFullYear()} ${website.name}. Built with DigiRise.</p></div>
+  <div class="footer">
+    ${socials.facebook || socials.instagram || socials.twitter ? `<div class="social-links">${socials.facebook ? `<a href="${socials.facebook}">Facebook</a>` : ""}${socials.instagram ? `<a href="${socials.instagram}">Instagram</a>` : ""}${socials.twitter ? `<a href="${socials.twitter}">Twitter</a>` : ""}</div>` : ""}
+    <p>&copy; ${new Date().getFullYear()} ${website.name}. Built with DigiRise.</p>
+  </div>
 </body>
 </html>`;
 
@@ -221,88 +258,7 @@ const WebsitePreview = () => {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
     setExporting(false);
-    toast({ title: "Website exported!", description: "HTML file downloaded." });
-  };
-
-  const renderPreview = () => {
-    if (!website?.generated_content) return null;
-    const content = website.generated_content as any;
-
-    return (
-      <div className="bg-background rounded-xl border border-border overflow-hidden">
-        {/* Hero */}
-        <div className="gold-gradient p-12 text-center">
-          <h1 className="text-4xl md:text-5xl font-display font-bold text-primary-foreground mb-4">
-            {content.hero?.heading || website.name}
-          </h1>
-          <p className="text-lg text-primary-foreground/80 max-w-2xl mx-auto">
-            {content.hero?.subheading || "Welcome to our business"}
-          </p>
-        </div>
-
-        {/* Showcase Images */}
-        {showcaseImages.length > 0 && (
-          <section className="p-8 md:p-10 bg-card">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
-              {showcaseImages.map((image, index) => (
-                <div key={image + index} className="overflow-hidden rounded-xl border border-border bg-background">
-                  <img
-                    src={image}
-                    alt={`${website.name} showcase ${index + 1}`}
-                    className="w-full h-56 object-cover"
-                    loading="lazy"
-                  />
-                </div>
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* About */}
-        {content.about && (
-          <div className="p-12 text-center">
-            <h2 className="text-3xl font-display font-bold mb-4">{content.about.heading || "About Us"}</h2>
-            <p className="text-muted-foreground max-w-2xl mx-auto">{content.about.text}</p>
-          </div>
-        )}
-
-        {/* Services */}
-        {content.services && (
-          <div className="p-12 bg-card">
-            <h2 className="text-3xl font-display font-bold text-center mb-8">
-              {content.services.heading || "Our Services"}
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-4xl mx-auto">
-              {(content.services.items || []).map((item: any, i: number) => (
-                <div key={i} className="bg-background rounded-xl p-6 border border-border text-center">
-                  <h3 className="font-display font-bold text-lg mb-2">{item.title}</h3>
-                  <p className="text-sm text-muted-foreground">{item.description}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Contact */}
-        {content.contact && (
-          <div className="p-12 text-center">
-            <h2 className="text-3xl font-display font-bold mb-4">{content.contact.heading || "Contact Us"}</h2>
-            <div className="space-y-2 text-muted-foreground">
-              {content.contact.phone && <p>📞 {content.contact.phone}</p>}
-              {content.contact.email && <p>✉️ {content.contact.email}</p>}
-              {content.contact.address && <p>📍 {content.contact.address}</p>}
-            </div>
-          </div>
-        )}
-
-        {/* Footer */}
-        <div className="charcoal-gradient p-6 text-center">
-          <p className="text-secondary-foreground/60 text-sm">
-            © {new Date().getFullYear()} {website.name}. Built with DigiRise.
-          </p>
-        </div>
-      </div>
-    );
+    toast({ title: "Website exported!" });
   };
 
   if (loading) {
@@ -312,6 +268,9 @@ const WebsitePreview = () => {
       </div>
     );
   }
+
+  const content = (website?.generated_content as any) || {};
+  const socials = content.socialLinks || {};
 
   return (
     <div className="min-h-screen bg-background">
@@ -334,11 +293,18 @@ const WebsitePreview = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
             <div>
               <h1 className="text-3xl font-display font-bold">{website?.name}</h1>
-              <p className="text-muted-foreground">Preview your generated website</p>
+              <p className="text-muted-foreground text-sm">Click any text on the preview to edit it</p>
             </div>
             <div className="flex gap-3 flex-wrap">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowThemePicker(!showThemePicker)}
+              >
+                <Palette className="h-4 w-4 mr-2" /> Theme
+              </Button>
               <Button variant="outline" size="sm" onClick={handleExport} disabled={exporting}>
-                <Download className="h-4 w-4 mr-2" /> {exporting ? "Exporting..." : "Export HTML"}
+                <Download className="h-4 w-4 mr-2" /> {exporting ? "Exporting..." : "Export"}
               </Button>
               {website?.status === "published" ? (
                 <Button size="sm" variant="outline" onClick={handleCopyLink}>
@@ -351,32 +317,57 @@ const WebsitePreview = () => {
                   onClick={handlePublish}
                   disabled={publishing}
                 >
-                  {publishing ? (
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  ) : (
-                    <Eye className="h-4 w-4 mr-2" />
-                  )}
+                  {publishing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Eye className="h-4 w-4 mr-2" />}
                   {publishing ? "Publishing..." : "Publish"}
                 </Button>
               )}
             </div>
           </div>
 
-          {/* Image Manager */}
-          {website && (
-            <WebsiteImageManager
-              websiteId={website.id}
-              images={userImages}
-              onImagesChange={handleImagesChange}
-            />
+          {/* Theme Picker */}
+          {showThemePicker && (
+            <div className="mb-6 p-4 rounded-xl border border-border bg-card">
+              <h3 className="text-sm font-semibold mb-3">Select Color Theme</h3>
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
+                {COLOR_THEMES.map((theme) => (
+                  <button
+                    key={theme.value}
+                    onClick={() => handleThemeChange(theme.value)}
+                    className={`p-3 rounded-xl border-2 transition-all text-left ${
+                      selectedTheme === theme.value
+                        ? "border-primary ring-2 ring-primary/20"
+                        : "border-border hover:border-primary/30"
+                    }`}
+                  >
+                    <div className="flex gap-1 mb-1.5">
+                      {theme.colors.map((c) => (
+                        <div key={c} className="w-5 h-5 rounded-full" style={{ backgroundColor: c }} />
+                      ))}
+                    </div>
+                    <span className="text-xs font-medium">{theme.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
 
-          {/* Payment confirmation contact */}
+          {/* Image Manager */}
+          {website && (
+            <div ref={imageManagerRef}>
+              <WebsiteImageManager
+                websiteId={website.id}
+                images={userImages}
+                onImagesChange={handleImagesChange}
+              />
+            </div>
+          )}
+
+          {/* Payment confirmation */}
           {website?.status !== "published" && paymentConfirmed === false && (
             <section className="mb-6 p-4 rounded-xl border border-border bg-card">
-              <p className="text-sm font-semibold mb-1">Payment confirmation required before publishing</p>
+              <p className="text-sm font-semibold mb-1">Payment confirmation required</p>
               <p className="text-sm text-muted-foreground mb-3">
-                Email the admin to confirm your payment, then click Publish again.
+                Email the admin to confirm your payment, then click Publish.
               </p>
               <a
                 href={`mailto:${ADMIN_PAYMENT_EMAIL}?subject=Payment%20Confirmation%20Request&body=Hi%20Admin,%20please%20confirm%20my%20payment%20for%20website%20publishing.`}
@@ -387,25 +378,30 @@ const WebsitePreview = () => {
             </section>
           )}
 
-          {/* Published URL banner */}
+          {/* Published URL */}
           {website?.status === "published" && website.published_url && (
             <div className="mb-6 p-4 rounded-xl bg-primary/5 border border-primary/20 flex items-center gap-3">
               <CheckCircle className="h-5 w-5 text-primary flex-shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold">Your site is live!</p>
-                <a
-                  href={website.published_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-primary underline truncate block"
-                >
+                <a href={website.published_url} target="_blank" rel="noopener noreferrer" className="text-sm text-primary underline truncate block">
                   {website.published_url}
                 </a>
               </div>
             </div>
           )}
 
-          {renderPreview()}
+          {/* Website Preview with inline editing */}
+          <WebsiteRenderer
+            content={content}
+            name={website?.name || ""}
+            colorTheme={selectedTheme}
+            images={userImages}
+            editable={true}
+            onContentChange={handleContentChange}
+            onUploadClick={() => imageManagerRef.current?.querySelector("button")?.click()}
+            socialLinks={socials}
+          />
         </motion.div>
       </main>
     </div>
