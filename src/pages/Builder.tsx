@@ -11,19 +11,11 @@ import { useToast } from "@/hooks/use-toast";
 import {
   Sparkles, ArrowRight, ArrowLeft, Building2, Palette, Type, Globe, Phone, Loader2,
 } from "lucide-react";
+import { COLOR_THEMES } from "@/lib/theme-colors";
 
 const BUSINESS_TYPES = [
   "Restaurant", "Salon", "School", "Boutique", "Consultancy",
   "Gym", "Clinic", "Real Estate", "E-commerce", "Photography", "Other",
-];
-
-const COLOR_THEMES = [
-  { value: "gold", label: "Gold & Amber", colors: ["#D4A017", "#B8860B"] },
-  { value: "ocean", label: "Ocean Blue", colors: ["#0077B6", "#023E8A"] },
-  { value: "forest", label: "Forest Green", colors: ["#2D6A4F", "#1B4332"] },
-  { value: "sunset", label: "Sunset Orange", colors: ["#E76F51", "#F4A261"] },
-  { value: "royal", label: "Royal Purple", colors: ["#7B2CBF", "#5A189A"] },
-  { value: "minimal", label: "Minimal Gray", colors: ["#333333", "#666666"] },
 ];
 
 const LOGO_STYLES = ["Modern", "Classic", "Creative", "Minimalist"];
@@ -104,6 +96,9 @@ const Builder = () => {
       }
 
       const generatedContent = await response.json();
+
+      // Attach social links to generated content for rendering
+      generatedContent.socialLinks = form.socialLinks;
 
       // Save to database
       const { data: website, error } = await supabase
