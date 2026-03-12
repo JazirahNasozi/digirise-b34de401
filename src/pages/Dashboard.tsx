@@ -7,7 +7,8 @@ import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import {
   Plus, Globe, Settings, LogOut, Sparkles, LayoutDashboard,
-  Clock, CheckCircle, FileText,
+  Clock, CheckCircle, FileText, MessageSquare, Lightbulb,
+  BarChart3, TrendingUp, Eye, Users,
 } from "lucide-react";
 
 interface Website {
@@ -28,33 +29,15 @@ const Dashboard = () => {
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (!session) {
-        navigate("/login");
-        return;
-      }
+      if (!session) { navigate("/login"); return; }
       setUser(session.user);
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        navigate("/login");
-        return;
-      }
+      if (!session) { navigate("/login"); return; }
       setUser(session.user);
-
-      // Check if admin → redirect
-      supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", session.user.id)
-        .eq("role", "admin")
-        .then(({ data: roles }) => {
-          if (roles && roles.length > 0) {
-            navigate("/admin");
-            return;
-          }
-        });
-
+      supabase.from("user_roles").select("role").eq("user_id", session.user.id).eq("role", "admin")
+        .then(({ data: roles }) => { if (roles && roles.length > 0) navigate("/admin"); });
       fetchWebsites();
     });
 
@@ -66,32 +49,17 @@ const Dashboard = () => {
       .from("websites")
       .select("id, name, business_type, status, created_at, published_url")
       .order("created_at", { ascending: false });
-
-    if (error) {
-      toast({ title: "Error loading websites", description: error.message, variant: "destructive" });
-    } else {
-      setWebsites(data || []);
-    }
+    if (error) toast({ title: "Error loading websites", description: error.message, variant: "destructive" });
+    else setWebsites(data || []);
     setLoading(false);
   };
 
-  const handleLogout = async () => {
-    await supabase.auth.signOut();
-    navigate("/");
-  };
+  const handleLogout = async () => { await supabase.auth.signOut(); navigate("/"); };
 
-  const handleCreateClick = () => {
-    navigate("/builder");
-  };
-
-  const statusIcon = (status: string) => {
-    if (status === "published") return <CheckCircle className="h-4 w-4 text-primary" />;
-    return <Clock className="h-4 w-4 text-muted-foreground" />;
-  };
+  const publishedCount = websites.filter((w) => w.status === "published").length;
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -110,60 +78,75 @@ const Dashboard = () => {
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        {/* Welcome */}
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-8">
           <h1 className="text-3xl font-display font-bold mb-1">
             Welcome back{user?.user_metadata?.full_name ? `, ${user.user_metadata.full_name}` : ""}
           </h1>
-          <p className="text-muted-foreground">Manage your AI-generated websites</p>
+          <p className="text-muted-foreground">Manage your websites and AI tools</p>
         </motion.div>
 
+        {/* Stats Row */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+          {[
+            { label: "Total Websites", value: websites.length, icon: Globe, color: "text-primary" },
+            { label: "Published", value: publishedCount, icon: CheckCircle, color: "text-primary" },
+            { label: "Drafts", value: websites.length - publishedCount, icon: Clock, color: "text-muted-foreground" },
+            { label: "AI Tools", value: "3", icon: Sparkles, color: "text-primary" },
+          ].map((stat, i) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.05 }}
+              className="bg-card rounded-xl p-4 border border-border"
+            >
+              <stat.icon className={`h-5 w-5 ${stat.color} mb-2`} />
+              <p className="text-2xl font-display font-bold">{stat.value}</p>
+              <p className="text-xs text-muted-foreground">{stat.label}</p>
+            </motion.div>
+          ))}
+        </div>
 
-        {/* Action Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+        {/* Quick Actions */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-10">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
-            onClick={handleCreateClick}
-            className="cursor-pointer group rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all gold-gradient gold-glow"
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
+            onClick={() => navigate("/builder")}
+            className="cursor-pointer group rounded-2xl p-5 shadow-lg hover:shadow-xl transition-all gold-gradient gold-glow"
           >
-            <Plus className="h-10 w-10 text-primary-foreground mb-3 group-hover:scale-110 transition-transform" />
-            <h3 className="text-xl font-display font-bold text-primary-foreground">
-              Create Website
-            </h3>
-            <p className="text-sm mt-1 text-primary-foreground/80">
-              Let AI build your perfect site
-            </p>
+            <Plus className="h-8 w-8 text-primary-foreground mb-2 group-hover:scale-110 transition-transform" />
+            <h3 className="text-lg font-display font-bold text-primary-foreground">Create Website</h3>
+            <p className="text-xs mt-1 text-primary-foreground/80">AI-powered site builder</p>
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="bg-card rounded-2xl p-6 border border-border shadow-sm"
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}
+            onClick={() => navigate("/ai-assistant")}
+            className="cursor-pointer bg-card rounded-2xl p-5 border border-border shadow-sm hover:border-primary/50 transition-colors group"
           >
-            <LayoutDashboard className="h-10 w-10 text-primary mb-3" />
-            <h3 className="text-xl font-display font-bold">My Websites</h3>
-            <p className="text-muted-foreground text-sm mt-1">
-              {websites.length} website{websites.length !== 1 ? "s" : ""} created
-            </p>
+            <MessageSquare className="h-8 w-8 text-primary mb-2 group-hover:scale-110 transition-transform" />
+            <h3 className="text-lg font-display font-bold">AI Assistant</h3>
+            <p className="text-xs text-muted-foreground mt-1">Generate business content</p>
           </motion.div>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+            onClick={() => navigate("/name-generator")}
+            className="cursor-pointer bg-card rounded-2xl p-5 border border-border shadow-sm hover:border-primary/50 transition-colors group"
+          >
+            <Lightbulb className="h-8 w-8 text-primary mb-2 group-hover:scale-110 transition-transform" />
+            <h3 className="text-lg font-display font-bold">Name Generator</h3>
+            <p className="text-xs text-muted-foreground mt-1">Business names & slogans</p>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.25 }}
             onClick={() => navigate("/settings")}
-            className="cursor-pointer bg-card rounded-2xl p-6 border border-border shadow-sm hover:border-primary/50 transition-colors"
+            className="cursor-pointer bg-card rounded-2xl p-5 border border-border shadow-sm hover:border-primary/50 transition-colors group"
           >
-            <Settings className="h-10 w-10 text-primary mb-3" />
-            <h3 className="text-xl font-display font-bold">Account Settings</h3>
-            <p className="text-muted-foreground text-sm mt-1">Update your profile & preferences</p>
+            <Settings className="h-8 w-8 text-primary mb-2 group-hover:scale-110 transition-transform" />
+            <h3 className="text-lg font-display font-bold">Settings</h3>
+            <p className="text-xs text-muted-foreground mt-1">Account & preferences</p>
           </motion.div>
         </div>
 
@@ -177,21 +160,11 @@ const Dashboard = () => {
               ))}
             </div>
           ) : websites.length === 0 ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              className="text-center py-16 bg-card rounded-2xl border border-border"
-            >
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-center py-16 bg-card rounded-2xl border border-border">
               <Globe className="h-16 w-16 text-muted-foreground/30 mx-auto mb-4" />
-              <h3 className="text-xl font-display font-semibold text-muted-foreground mb-2">
-                No websites yet
-              </h3>
+              <h3 className="text-xl font-display font-semibold text-muted-foreground mb-2">No websites yet</h3>
               <p className="text-muted-foreground mb-6">Create your first AI-powered website in minutes</p>
-              <Button
-                onClick={handleCreateClick}
-                className="gold-gradient text-primary-foreground gold-glow"
-                disabled={false}
-              >
+              <Button onClick={() => navigate("/builder")} className="gold-gradient text-primary-foreground gold-glow">
                 <Plus className="h-4 w-4 mr-2" /> Create Your First Website
               </Button>
             </motion.div>
@@ -208,17 +181,13 @@ const Dashboard = () => {
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div>
-                      <h3 className="font-display font-bold text-lg group-hover:text-primary transition-colors">
-                        {site.name}
-                      </h3>
+                      <h3 className="font-display font-bold text-lg group-hover:text-primary transition-colors">{site.name}</h3>
                       {site.business_type && (
-                        <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">
-                          {site.business_type}
-                        </span>
+                        <span className="text-xs text-muted-foreground bg-muted px-2 py-1 rounded-full">{site.business_type}</span>
                       )}
                     </div>
                     <div className="flex items-center gap-1">
-                      {statusIcon(site.status)}
+                      {site.status === "published" ? <CheckCircle className="h-4 w-4 text-primary" /> : <Clock className="h-4 w-4 text-muted-foreground" />}
                       <span className="text-xs capitalize text-muted-foreground">{site.status}</span>
                     </div>
                   </div>
