@@ -12,6 +12,8 @@ import WebsitePreview from "./pages/WebsitePreview";
 import Settings from "./pages/Settings";
 import AdminDashboard from "./pages/AdminDashboard";
 import PublicSite from "./pages/PublicSite";
+import AIAssistant from "./pages/AIAssistant";
+import AINameGenerator from "./pages/AINameGenerator";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +34,8 @@ const App = () => (
           <Route path="/settings" element={<Settings />} />
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/site/:id" element={<PublicSite />} />
+          <Route path="/ai-assistant" element={<AIAssistant />} />
+          <Route path="/name-generator" element={<AINameGenerator />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
