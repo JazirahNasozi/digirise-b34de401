@@ -36,8 +36,23 @@ const WebsiteRenderer = ({
 
   return (
     <div className="bg-background rounded-xl border border-border overflow-hidden">
+      {/* Nav bar with business name */}
+      <nav
+        className="px-6 py-3 flex items-center justify-between"
+        style={{ background: theme.heroGradient }}
+      >
+        <span className="font-display font-bold text-lg" style={{ color: heroPrimaryFg }}>
+          {name}
+        </span>
+        <div className="hidden sm:flex items-center gap-6 text-sm font-medium" style={{ color: heroPrimaryFg, opacity: 0.8 }}>
+          {content?.about && <span>About</span>}
+          {content?.services && <span>Services</span>}
+          {content?.contact && <span>Contact</span>}
+        </div>
+      </nav>
+
       {/* Hero */}
-      <header style={heroStyle} className="px-6 py-16 md:py-24 text-center">
+      <header style={heroStyle} className="px-6 py-20 md:py-28 text-center">
         <EditableText
           value={content?.hero?.heading || name}
           onChange={(v) => update("hero.heading", v)}
@@ -67,7 +82,7 @@ const WebsiteRenderer = ({
         )}
       </header>
 
-      {/* Gallery / Images */}
+      {/* Gallery */}
       <section className="p-8 md:p-12">
         {images.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 max-w-6xl mx-auto">
@@ -211,6 +226,7 @@ const WebsiteRenderer = ({
 
       {/* Footer */}
       <footer className="px-6 py-8 text-center" style={{ background: "hsl(220, 20%, 10%)" }}>
+        <p className="font-display font-bold text-secondary-foreground/70 mb-3">{name}</p>
         {socialLinks && (socialLinks.facebook || socialLinks.instagram || socialLinks.twitter) && (
           <div className="flex items-center justify-center gap-4 mb-4">
             {socialLinks.facebook && (
