@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
   Sparkles, ArrowLeft, Download, Eye, Loader2, CheckCircle, Copy, Mail, Palette,
+  Monitor, Tablet, Smartphone,
 } from "lucide-react";
 import WebsiteImageManager from "@/components/WebsiteImageManager";
 import WebsiteRenderer from "@/components/website/WebsiteRenderer";
@@ -23,6 +24,14 @@ interface WebsiteData {
 
 const ADMIN_PAYMENT_EMAIL = "ellyjazmine@gmail.com";
 
+type DevicePreview = "desktop" | "tablet" | "mobile";
+
+const DEVICE_WIDTHS: Record<DevicePreview, string> = {
+  desktop: "100%",
+  tablet: "768px",
+  mobile: "375px",
+};
+
 const WebsitePreview = () => {
   const { id } = useParams<{ id: string }>();
   const [website, setWebsite] = useState<WebsiteData | null>(null);
@@ -33,25 +42,23 @@ const WebsitePreview = () => {
   const [userImages, setUserImages] = useState<string[]>([]);
   const [selectedTheme, setSelectedTheme] = useState("gold");
   const [showThemePicker, setShowThemePicker] = useState(false);
+  const [devicePreview, setDevicePreview] = useState<DevicePreview>("desktop");
   const imageManagerRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     if (!id) return;
-
     const loadData = async () => {
       const [{ data, error }, { data: authData }] = await Promise.all([
         supabase.from("websites").select("*").eq("id", id).maybeSingle(),
         supabase.auth.getSession(),
       ]);
-
       if (error || !data) {
         toast({ title: "Website not found", variant: "destructive" });
         navigate("/dashboard");
         return;
       }
-
       setWebsite(data as WebsiteData);
       setSelectedTheme(data.color_theme || "gold");
       const gc = data.generated_content as any;
@@ -66,10 +73,8 @@ const WebsitePreview = () => {
           .maybeSingle();
         setPaymentConfirmed(Boolean(profile?.payment_confirmed));
       }
-
       setLoading(false);
     };
-
     loadData();
   }, [id, navigate, toast]);
 
@@ -79,10 +84,7 @@ const WebsitePreview = () => {
       if (!website) return;
       const gc = (website.generated_content as any) || {};
       const updatedContent = { ...gc, user_images: newImages };
-      await supabase
-        .from("websites")
-        .update({ generated_content: updatedContent as any })
-        .eq("id", website.id);
+      await supabase.from("websites").update({ generated_content: updatedContent as any }).eq("id", website.id);
       setWebsite((w) => (w ? { ...w, generated_content: updatedContent } : w));
     },
     [website]
@@ -92,8 +94,6 @@ const WebsitePreview = () => {
     async (path: string, value: any) => {
       if (!website) return;
       const gc = { ...((website.generated_content as any) || {}) };
-
-      // Set nested value by dot path
       const keys = path.split(".");
       let obj = gc;
       for (let i = 0; i < keys.length - 1; i++) {
@@ -107,19 +107,11 @@ const WebsitePreview = () => {
         obj = obj[key];
       }
       const lastKey = keys[keys.length - 1];
-      if (!isNaN(Number(lastKey))) {
-        obj[Number(lastKey)] = value;
-      } else {
-        obj[lastKey] = value;
-      }
+      if (!isNaN(Number(lastKey))) obj[Number(lastKey)] = value;
+      else obj[lastKey] = value;
 
       setWebsite((w) => (w ? { ...w, generated_content: gc } : w));
-
-      // Debounced save
-      await supabase
-        .from("websites")
-        .update({ generated_content: gc as any })
-        .eq("id", website.id);
+      await supabase.from("websites").update({ generated_content: gc as any }).eq("id", website.id);
     },
     [website]
   );
@@ -139,32 +131,17 @@ const WebsitePreview = () => {
     if (!website) return;
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) { navigate("/login"); return; }
-
     const { data: profile } = await supabase
-      .from("profiles")
-      .select("payment_confirmed")
-      .eq("user_id", session.user.id)
-      .maybeSingle();
-
+      .from("profiles").select("payment_confirmed").eq("user_id", session.user.id).maybeSingle();
     const isPaid = Boolean(profile?.payment_confirmed);
     setPaymentConfirmed(isPaid);
-
     if (!isPaid) {
-      toast({
-        title: "Payment required",
-        description: "Please contact the admin to confirm your payment before publishing.",
-        variant: "destructive",
-      });
+      toast({ title: "Payment required", description: "Contact admin to confirm payment.", variant: "destructive" });
       return;
     }
-
     setPublishing(true);
     const publicUrl = `${window.location.origin}/site/${website.id}`;
-    const { error } = await supabase
-      .from("websites")
-      .update({ status: "published", published_url: publicUrl })
-      .eq("id", website.id);
-
+    const { error } = await supabase.from("websites").update({ status: "published", published_url: publicUrl }).eq("id", website.id);
     if (error) {
       toast({ title: "Publish failed", description: error.message, variant: "destructive" });
     } else {
@@ -177,7 +154,7 @@ const WebsitePreview = () => {
   const handleCopyLink = () => {
     if (website?.published_url) {
       navigator.clipboard.writeText(website.published_url);
-      toast({ title: "Link copied to clipboard!" });
+      toast({ title: "Link copied!" });
     }
   };
 
@@ -191,62 +168,18 @@ const WebsitePreview = () => {
     const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1.0">
   <title>${content.seo?.title || website.name}</title>
   <meta name="description" content="${content.seo?.description || ""}">
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-  <style>
-    *{margin:0;padding:0;box-sizing:border-box}
-    body{font-family:'Inter',sans-serif;color:#1a1a2e;line-height:1.6}
-    h1,h2,h3{font-family:'Playfair Display',serif}
-    .hero{background:${theme.heroGradient};color:hsl(${theme.primaryForeground});padding:80px 20px;text-align:center}
-    .hero h1{font-size:clamp(2rem,5vw,3.5rem);margin-bottom:16px}
-    .hero p{font-size:1.1rem;opacity:.9;max-width:600px;margin:0 auto}
-    .gallery{padding:48px 20px}
-    .gallery-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px;max-width:1100px;margin:0 auto}
-    .gallery-grid img{width:100%;height:220px;object-fit:cover;border-radius:12px}
-    .section{padding:64px 20px;max-width:900px;margin:0 auto;text-align:center}
-    .section h2{font-size:2rem;margin-bottom:20px}
-    .section p{color:#555}
-    .services{background:#f8f8f8;padding:64px 20px}
-    .services h2{text-align:center;font-size:2rem;margin-bottom:32px}
-    .services-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;max-width:1000px;margin:0 auto}
-    .service-card{background:#fff;border:1px solid #eee;border-radius:16px;padding:32px 24px;text-align:center}
-    .service-card h3{margin-bottom:8px}
-    .service-card p{font-size:.9rem;color:#666}
-    .testimonials{padding:64px 20px}
-    .testimonials h2{text-align:center;font-size:2rem;margin-bottom:32px}
-    .test-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:20px;max-width:900px;margin:0 auto}
-    .test-card{background:#f9f9f9;border:1px solid #eee;border-radius:16px;padding:24px}
-    .test-card .quote{font-style:italic;color:#555;margin-bottom:12px}
-    .test-card .author{font-weight:600;font-size:.9rem}
-    .test-card .role{font-size:.8rem;color:#888}
-    .contact{padding:64px 20px;text-align:center;background:#f8f8f8}
-    .contact h2{font-size:2rem;margin-bottom:20px}
-    .contact p{color:#555;margin:6px 0}
-    .footer{background:#1a1a2e;color:rgba(255,255,255,.5);padding:24px;text-align:center;font-size:.85rem}
-    .social-links{display:flex;gap:16px;justify-content:center;margin-bottom:12px}
-    .social-links a{color:rgba(255,255,255,.6);text-decoration:none}
-    @media(max-width:640px){.hero{padding:48px 16px}.hero h1{font-size:1.8rem}}
-  </style>
+  <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Inter',sans-serif;color:#1a1a2e;line-height:1.6}h1,h2,h3{font-family:'Playfair Display',serif}.hero{background:${theme.heroGradient};color:hsl(${theme.primaryForeground});padding:80px 20px;text-align:center}.hero h1{font-size:clamp(2rem,5vw,3.5rem);margin-bottom:16px}.hero p{font-size:1.1rem;opacity:.9;max-width:600px;margin:0 auto}.section{padding:64px 20px;max-width:900px;margin:0 auto;text-align:center}.section h2{font-size:2rem;margin-bottom:20px}.services{background:#f8f8f8;padding:64px 20px}.services-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:20px;max-width:1000px;margin:0 auto}.service-card{background:#fff;border:1px solid #eee;border-radius:16px;padding:32px 24px;text-align:center}.footer{background:#1a1a2e;color:rgba(255,255,255,.5);padding:24px;text-align:center;font-size:.85rem}@media(max-width:640px){.hero{padding:48px 16px}}</style>
 </head>
 <body>
-  <div class="hero">
-    <h1>${content.hero?.heading || website.name}</h1>
-    <p>${content.hero?.subheading || ""}</p>
-  </div>
-  ${userImages.length > 0 ? `<section class="gallery"><div class="gallery-grid">${userImages.map((img: string, i: number) => `<img src="${img}" alt="${website.name} photo ${i + 1}" loading="lazy"/>`).join("")}</div></section>` : ""}
+  <div class="hero"><h1>${content.hero?.heading || website.name}</h1><p>${content.hero?.subheading || ""}</p></div>
   ${content.about ? `<div class="section"><h2>${content.about.heading || "About Us"}</h2><p>${content.about.text}</p></div>` : ""}
-  ${content.services ? `<div class="services"><h2>${content.services.heading || "Our Services"}</h2><div class="services-grid">${(content.services.items || []).map((s: any) => `<div class="service-card"><h3>${s.title}</h3><p>${s.description}</p></div>`).join("")}</div></div>` : ""}
-  ${content.testimonials?.length ? `<div class="testimonials"><h2>What Our Clients Say</h2><div class="test-grid">${content.testimonials.map((t: any) => `<div class="test-card"><p class="quote">"${t.text}"</p><p class="author">${t.name}</p><p class="role">${t.role}</p></div>`).join("")}</div></div>` : ""}
-  ${content.contact ? `<div class="contact"><h2>${content.contact.heading || "Contact Us"}</h2>${content.contact.phone ? `<p>📞 ${content.contact.phone}</p>` : ""}${content.contact.email ? `<p>✉️ ${content.contact.email}</p>` : ""}${content.contact.address ? `<p>📍 ${content.contact.address}</p>` : ""}</div>` : ""}
-  <div class="footer">
-    ${socials.facebook || socials.instagram || socials.twitter ? `<div class="social-links">${socials.facebook ? `<a href="${socials.facebook}">Facebook</a>` : ""}${socials.instagram ? `<a href="${socials.instagram}">Instagram</a>` : ""}${socials.twitter ? `<a href="${socials.twitter}">Twitter</a>` : ""}</div>` : ""}
-    <p>&copy; ${new Date().getFullYear()} ${website.name}. Built with DigiRise.</p>
-  </div>
-</body>
-</html>`;
+  ${content.services ? `<div class="services"><h2 style="text-align:center;font-size:2rem;margin-bottom:32px">${content.services.heading || "Our Services"}</h2><div class="services-grid">${(content.services.items || []).map((s: any) => `<div class="service-card"><h3>${s.title}</h3><p>${s.description}</p></div>`).join("")}</div></div>` : ""}
+  <div class="footer"><p>&copy; ${new Date().getFullYear()} ${website.name}. Built with DigiRise.</p></div>
+</body></html>`;
 
     const blob = new Blob([html], { type: "text/html" });
     const url = URL.createObjectURL(blob);
@@ -263,7 +196,7 @@ const WebsitePreview = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
@@ -293,18 +226,14 @@ const WebsitePreview = () => {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-4">
             <div>
               <h1 className="text-3xl font-display font-bold">{website?.name}</h1>
-              <p className="text-muted-foreground text-sm">Click any text on the preview to edit it</p>
+              <p className="text-muted-foreground text-sm">Click any text to edit it</p>
             </div>
-            <div className="flex gap-3 flex-wrap">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowThemePicker(!showThemePicker)}
-              >
+            <div className="flex gap-2 flex-wrap">
+              <Button variant="outline" size="sm" onClick={() => setShowThemePicker(!showThemePicker)}>
                 <Palette className="h-4 w-4 mr-2" /> Theme
               </Button>
               <Button variant="outline" size="sm" onClick={handleExport} disabled={exporting}>
-                <Download className="h-4 w-4 mr-2" /> {exporting ? "Exporting..." : "Export"}
+                <Download className="h-4 w-4 mr-2" /> Export
               </Button>
               {website?.status === "published" ? (
                 <Button size="sm" variant="outline" onClick={handleCopyLink}>
@@ -313,7 +242,7 @@ const WebsitePreview = () => {
               ) : (
                 <Button
                   size="sm"
-                  className="gold-gradient text-primary-foreground gold-glow"
+                  className="bg-primary text-primary-foreground hover:bg-primary/90"
                   onClick={handlePublish}
                   disabled={publishing}
                 >
@@ -322,6 +251,27 @@ const WebsitePreview = () => {
                 </Button>
               )}
             </div>
+          </div>
+
+          {/* Device preview toggle */}
+          <div className="flex items-center gap-1 mb-6 bg-card rounded-lg border border-border p-1 w-fit">
+            {([
+              { key: "desktop" as DevicePreview, icon: Monitor, label: "Desktop" },
+              { key: "tablet" as DevicePreview, icon: Tablet, label: "Tablet" },
+              { key: "mobile" as DevicePreview, icon: Smartphone, label: "Mobile" },
+            ]).map(({ key, icon: Icon, label }) => (
+              <button
+                key={key}
+                onClick={() => setDevicePreview(key)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+                  devicePreview === key
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5" /> {label}
+              </button>
+            ))}
           </div>
 
           {/* Theme Picker */}
@@ -354,23 +304,17 @@ const WebsitePreview = () => {
           {/* Image Manager */}
           {website && (
             <div ref={imageManagerRef}>
-              <WebsiteImageManager
-                websiteId={website.id}
-                images={userImages}
-                onImagesChange={handleImagesChange}
-              />
+              <WebsiteImageManager websiteId={website.id} images={userImages} onImagesChange={handleImagesChange} />
             </div>
           )}
 
-          {/* Payment confirmation */}
+          {/* Payment notice */}
           {website?.status !== "published" && paymentConfirmed === false && (
             <section className="mb-6 p-4 rounded-xl border border-border bg-card">
               <p className="text-sm font-semibold mb-1">Payment confirmation required</p>
-              <p className="text-sm text-muted-foreground mb-3">
-                Email the admin to confirm your payment, then click Publish.
-              </p>
+              <p className="text-sm text-muted-foreground mb-3">Email the admin to confirm your payment, then click Publish.</p>
               <a
-                href={`mailto:${ADMIN_PAYMENT_EMAIL}?subject=Payment%20Confirmation%20Request&body=Hi%20Admin,%20please%20confirm%20my%20payment%20for%20website%20publishing.`}
+                href={`mailto:${ADMIN_PAYMENT_EMAIL}?subject=Payment%20Confirmation%20Request`}
                 className="inline-flex items-center gap-2 text-sm text-primary underline"
               >
                 <Mail className="h-4 w-4" /> {ADMIN_PAYMENT_EMAIL}
@@ -391,17 +335,22 @@ const WebsitePreview = () => {
             </div>
           )}
 
-          {/* Website Preview with inline editing */}
-          <WebsiteRenderer
-            content={content}
-            name={website?.name || ""}
-            colorTheme={selectedTheme}
-            images={userImages}
-            editable={true}
-            onContentChange={handleContentChange}
-            onUploadClick={() => imageManagerRef.current?.querySelector("button")?.click()}
-            socialLinks={socials}
-          />
+          {/* Website Preview with device sizing */}
+          <div
+            className="mx-auto transition-all duration-300"
+            style={{ maxWidth: DEVICE_WIDTHS[devicePreview] }}
+          >
+            <WebsiteRenderer
+              content={content}
+              name={website?.name || ""}
+              colorTheme={selectedTheme}
+              images={userImages}
+              editable={true}
+              onContentChange={handleContentChange}
+              onUploadClick={() => imageManagerRef.current?.querySelector("button")?.click()}
+              socialLinks={socials}
+            />
+          </div>
         </motion.div>
       </main>
     </div>
