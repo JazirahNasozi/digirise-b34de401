@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
   Sparkles, ArrowLeft, Download, Eye, Loader2, CheckCircle, Copy, Mail, Palette,
-  Monitor, Tablet, Smartphone, Rocket, Github, ExternalLink, FileCode, ChevronDown, ChevronUp,
+  Monitor, Tablet, Smartphone, Rocket, Github, ExternalLink, FileCode, Globe,
 } from "lucide-react";
 import WebsiteImageManager from "@/components/WebsiteImageManager";
 import WebsiteRenderer from "@/components/website/WebsiteRenderer";
