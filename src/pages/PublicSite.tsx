@@ -23,10 +23,17 @@ const PublicSite = () => {
           setNotFound(true);
         } else {
           setWebsite(data);
+          // Set browser tab title to business name
+          document.title = data.name || "DigiRise Website";
         }
         setLoading(false);
       });
   }, [id]);
+
+  // Cleanup title on unmount
+  useEffect(() => {
+    return () => { document.title = "DigiRise"; };
+  }, []);
 
   if (loading) {
     return (

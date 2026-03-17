@@ -28,22 +28,24 @@ Color theme: ${colorTheme}
 Logo style: ${logoStyle}
 Contact: Phone: ${contactInfo?.phone || "N/A"}, Email: ${contactInfo?.email || "N/A"}, Address: ${contactInfo?.address || "N/A"}
 
-Generate a complete website structure with real, professional content. Return a JSON object with this exact structure:
+Generate a complete, multi-page website structure with real, professional content. Return a JSON object with this exact structure:
 {
   "hero": {
-    "heading": "A compelling main headline",
-    "subheading": "A professional tagline/subheading"
+    "heading": "A compelling main headline featuring the business name",
+    "subheading": "A professional tagline/subheading",
+    "cta": "Call to action button text"
   },
   "about": {
     "heading": "About section title",
-    "text": "2-3 paragraphs about the business"
+    "text": "2-3 paragraphs about the business, its history, mission, and values"
   },
   "services": {
     "heading": "Services section title",
     "items": [
-      { "title": "Service 1", "description": "Description" },
-      { "title": "Service 2", "description": "Description" },
-      { "title": "Service 3", "description": "Description" }
+      { "title": "Service 1", "description": "Detailed description" },
+      { "title": "Service 2", "description": "Detailed description" },
+      { "title": "Service 3", "description": "Detailed description" },
+      { "title": "Service 4", "description": "Detailed description" }
     ]
   },
   "contact": {
@@ -53,15 +55,34 @@ Generate a complete website structure with real, professional content. Return a 
     "address": "${contactInfo?.address || ""}"
   },
   "testimonials": [
-    { "name": "Customer Name", "text": "Testimonial text", "role": "Customer role" }
+    { "name": "Customer Name", "text": "Realistic testimonial text", "role": "Customer role" },
+    { "name": "Customer Name", "text": "Realistic testimonial text", "role": "Customer role" },
+    { "name": "Customer Name", "text": "Realistic testimonial text", "role": "Customer role" }
   ],
+  "faq": {
+    "heading": "Frequently Asked Questions",
+    "items": [
+      { "question": "A common question", "answer": "A helpful detailed answer" },
+      { "question": "A common question", "answer": "A helpful detailed answer" },
+      { "question": "A common question", "answer": "A helpful detailed answer" },
+      { "question": "A common question", "answer": "A helpful detailed answer" }
+    ]
+  },
+  "blog": {
+    "heading": "Latest News & Updates",
+    "posts": [
+      { "title": "Blog post title", "excerpt": "Short preview of the blog post content", "date": "2025-03-15" },
+      { "title": "Blog post title", "excerpt": "Short preview of the blog post content", "date": "2025-02-20" },
+      { "title": "Blog post title", "excerpt": "Short preview of the blog post content", "date": "2025-01-10" }
+    ]
+  },
   "seo": {
-    "title": "Page title for SEO",
+    "title": "Page title for SEO including business name",
     "description": "Meta description for SEO"
   }
 }
 
-Make the content professional, engaging, and specific to a ${businessType} business. Use real-sounding content, not placeholder text.`;
+Make ALL content professional, engaging, and specific to a ${businessType} business called "${businessName}". Use real-sounding content, not placeholder text. The hero heading MUST include the business name "${businessName}".`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -80,7 +101,7 @@ Make the content professional, engaging, and specific to a ${businessType} busin
             type: "function",
             function: {
               name: "generate_website_content",
-              description: "Generate structured website content",
+              description: "Generate structured website content with all sections",
               parameters: {
                 type: "object",
                 properties: {
@@ -89,15 +110,13 @@ Make the content professional, engaging, and specific to a ${businessType} busin
                     properties: {
                       heading: { type: "string" },
                       subheading: { type: "string" },
+                      cta: { type: "string" },
                     },
                     required: ["heading", "subheading"],
                   },
                   about: {
                     type: "object",
-                    properties: {
-                      heading: { type: "string" },
-                      text: { type: "string" },
-                    },
+                    properties: { heading: { type: "string" }, text: { type: "string" } },
                     required: ["heading", "text"],
                   },
                   services: {
@@ -108,10 +127,7 @@ Make the content professional, engaging, and specific to a ${businessType} busin
                         type: "array",
                         items: {
                           type: "object",
-                          properties: {
-                            title: { type: "string" },
-                            description: { type: "string" },
-                          },
+                          properties: { title: { type: "string" }, description: { type: "string" } },
                           required: ["title", "description"],
                         },
                       },
@@ -120,36 +136,54 @@ Make the content professional, engaging, and specific to a ${businessType} busin
                   },
                   contact: {
                     type: "object",
-                    properties: {
-                      heading: { type: "string" },
-                      phone: { type: "string" },
-                      email: { type: "string" },
-                      address: { type: "string" },
-                    },
+                    properties: { heading: { type: "string" }, phone: { type: "string" }, email: { type: "string" }, address: { type: "string" } },
                     required: ["heading"],
                   },
                   testimonials: {
                     type: "array",
                     items: {
                       type: "object",
-                      properties: {
-                        name: { type: "string" },
-                        text: { type: "string" },
-                        role: { type: "string" },
-                      },
+                      properties: { name: { type: "string" }, text: { type: "string" }, role: { type: "string" } },
                       required: ["name", "text", "role"],
                     },
                   },
-                  seo: {
+                  faq: {
                     type: "object",
                     properties: {
-                      title: { type: "string" },
-                      description: { type: "string" },
+                      heading: { type: "string" },
+                      items: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: { question: { type: "string" }, answer: { type: "string" } },
+                          required: ["question", "answer"],
+                        },
+                      },
                     },
+                    required: ["heading", "items"],
+                  },
+                  blog: {
+                    type: "object",
+                    properties: {
+                      heading: { type: "string" },
+                      posts: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: { title: { type: "string" }, excerpt: { type: "string" }, date: { type: "string" } },
+                          required: ["title", "excerpt", "date"],
+                        },
+                      },
+                    },
+                    required: ["heading", "posts"],
+                  },
+                  seo: {
+                    type: "object",
+                    properties: { title: { type: "string" }, description: { type: "string" } },
                     required: ["title", "description"],
                   },
                 },
-                required: ["hero", "about", "services", "contact", "seo"],
+                required: ["hero", "about", "services", "contact", "seo", "faq", "blog"],
                 additionalProperties: false,
               },
             },
@@ -162,14 +196,12 @@ Make the content professional, engaging, and specific to a ${businessType} busin
     if (!response.ok) {
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit exceeded. Please try again in a moment." }), {
-          status: 429,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (response.status === 402) {
         return new Response(JSON.stringify({ error: "AI credits exhausted. Please add credits." }), {
-          status: 402,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const text = await response.text();
@@ -179,14 +211,13 @@ Make the content professional, engaging, and specific to a ${businessType} busin
 
     const data = await response.json();
     const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-    
+
     let content;
     if (toolCall?.function?.arguments) {
       content = typeof toolCall.function.arguments === "string"
         ? JSON.parse(toolCall.function.arguments)
         : toolCall.function.arguments;
     } else {
-      // Fallback: try to parse from message content
       const raw = data.choices?.[0]?.message?.content || "";
       const cleaned = raw.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
       content = JSON.parse(cleaned);
