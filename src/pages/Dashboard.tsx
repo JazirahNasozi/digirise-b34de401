@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import {
-  Plus, Globe, Settings, LogOut, Sparkles,
+  Plus, Globe, Settings, LogOut,
   Clock, CheckCircle, FileText, MessageSquare, Lightbulb,
   Trash2, Eye, Pencil,
 } from "lucide-react";
@@ -74,7 +74,7 @@ const Dashboard = () => {
       <header className="border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" />
+            <img src="/favicon.png" alt="DigiRise" className="h-8 w-8" />
             <span className="text-xl font-display font-bold">DigiRise</span>
           </div>
           <div className="flex items-center gap-3">
@@ -102,7 +102,7 @@ const Dashboard = () => {
             { label: "Total Websites", value: websites.length, icon: Globe, color: "text-primary" },
             { label: "Published", value: publishedCount, icon: CheckCircle, color: "text-primary" },
             { label: "Drafts", value: websites.length - publishedCount, icon: Clock, color: "text-muted-foreground" },
-            { label: "AI Tools", value: "3", icon: Sparkles, color: "text-primary" },
+            { label: "AI Tools", value: "3", icon: Lightbulb, color: "text-primary" },
           ].map((stat, i) => (
             <motion.div
               key={stat.label}

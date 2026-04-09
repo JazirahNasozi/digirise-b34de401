@@ -39,7 +39,7 @@ const Index = () => {
       <header className="fixed top-0 left-0 right-0 z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" />
+            <img src="/favicon.png" alt="DigiRise" className="h-8 w-8" />
             <span className="text-xl font-display font-bold">DigiRise</span>
           </div>
           <nav className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
@@ -229,7 +229,7 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="flex flex-col md:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-primary" />
+              <img src="/favicon.png" alt="DigiRise" className="h-6 w-6" />
               <span className="font-display font-bold text-secondary-foreground">DigiRise</span>
             </div>
             <p className="text-sm text-muted-foreground text-center">

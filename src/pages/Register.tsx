@@ -58,7 +58,7 @@ const Register = () => {
         <div className="glass-card rounded-2xl p-8 shadow-2xl">
           <div className="text-center mb-8">
             <Link to="/" className="inline-flex items-center gap-2 mb-6">
-              <Sparkles className="h-8 w-8 text-primary" />
+              <img src="/favicon.png" alt="DigiRise" className="h-8 w-8" />
               <span className="text-2xl font-display font-bold text-secondary-foreground">DigiRise</span>
             </Link>
             <h1 className="text-3xl font-display font-bold text-secondary-foreground">Get Started</h1>
