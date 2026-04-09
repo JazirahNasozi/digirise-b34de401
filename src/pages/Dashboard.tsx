@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import type { User } from "@supabase/supabase-js";
 import {
-  Plus, Globe, Settings, LogOut, Sparkles,
+  Plus, Globe, Settings, LogOut,
   Clock, CheckCircle, FileText, MessageSquare, Lightbulb,
   Trash2, Eye, Pencil,
 } from "lucide-react";
