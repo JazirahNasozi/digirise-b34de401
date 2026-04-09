@@ -164,7 +164,7 @@ const Builder = () => {
       <header className="border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" />
+            <img src="/favicon.png" alt="DigiRise" className="h-8 w-8" />
             <span className="text-xl font-display font-bold">DigiRise</span>
           </div>
           <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>
