@@ -189,6 +189,16 @@ const AdminDashboard = () => {
           <div className="p-12 text-center"><Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" /></div>
         ) : (
           <>
+            {/* Analytics Tab */}
+            {activeTab === "analytics" && (
+              <AdminAnalyticsTab profiles={profiles} websites={websites} />
+            )}
+
+            {/* Cloud Tab */}
+            {activeTab === "cloud" && (
+              <AdminCloudTab profileCount={profiles.length} websiteCount={websites.length} />
+            )}
+
             {/* Users Tab */}
             {activeTab === "users" && (
               <div className="bg-card rounded-2xl border border-border overflow-hidden">
