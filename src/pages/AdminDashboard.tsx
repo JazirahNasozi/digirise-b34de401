@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
   LogOut, Users, CheckCircle, XCircle, Globe, Shield, Loader2,
-  FileText, Eye, Trash2, BarChart3, Cloud,
+  FileText, Eye, Trash2, BarChart3, Cloud, Database,
 } from "lucide-react";
+import AdminAnalyticsTab from "@/components/admin/AdminAnalyticsTab";
+import AdminCloudTab from "@/components/admin/AdminCloudTab";
 
 interface UserProfile {
   id: string;
@@ -29,7 +31,7 @@ interface UserWebsite {
   published_url: string | null;
 }
 
-type Tab = "users" | "websites" | "activity";
+type Tab = "users" | "websites" | "activity" | "analytics" | "cloud";
 
 const AdminDashboard = () => {
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
@@ -165,6 +167,8 @@ const AdminDashboard = () => {
         {/* Tabs */}
         <div className="flex items-center gap-1 mb-6 bg-card rounded-lg border border-border p-1 w-fit">
           {([
+            { key: "analytics" as Tab, label: "Analytics", icon: BarChart3 },
+            { key: "cloud" as Tab, label: "Cloud", icon: Database },
             { key: "users" as Tab, label: "Users", icon: Users },
             { key: "websites" as Tab, label: "Websites", icon: Globe },
             { key: "activity" as Tab, label: "Activity", icon: BarChart3 },
@@ -185,6 +189,16 @@ const AdminDashboard = () => {
           <div className="p-12 text-center"><Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" /></div>
         ) : (
           <>
+            {/* Analytics Tab */}
+            {activeTab === "analytics" && (
+              <AdminAnalyticsTab profiles={profiles} websites={websites} />
+            )}
+
+            {/* Cloud Tab */}
+            {activeTab === "cloud" && (
+              <AdminCloudTab profileCount={profiles.length} websiteCount={websites.length} />
+            )}
+
             {/* Users Tab */}
             {activeTab === "users" && (
               <div className="bg-card rounded-2xl border border-border overflow-hidden">
