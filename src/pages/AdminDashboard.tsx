@@ -5,8 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Sparkles, LogOut, Users, CheckCircle, XCircle, Globe, Shield, Loader2,
-  FileText, Eye, Trash2, BarChart3,
+  LogOut, Users, CheckCircle, XCircle, Globe, Shield, Loader2,
+  FileText, Eye, Trash2, BarChart3, Cloud,
 } from "lucide-react";
 
 interface UserProfile {
