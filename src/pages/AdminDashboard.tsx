@@ -128,7 +128,7 @@ const AdminDashboard = () => {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <a href="https://lovable.dev/projects/6d5fd211-55df-4dbc-b0bf-484971f87cc3" target="_blank" rel="noopener noreferrer">
+            <a href="https://lovable.dev/projects/6d5fd211-55df-4dbc-b0bf-484971f87cc3/cloud" target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm">
                 <Cloud className="h-4 w-4 mr-2" /> Cloud
               </Button>
