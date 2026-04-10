@@ -6,8 +6,10 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
   LogOut, Users, CheckCircle, XCircle, Globe, Shield, Loader2,
-  FileText, Eye, Trash2, BarChart3, Cloud,
+  FileText, Eye, Trash2, BarChart3, Cloud, Database,
 } from "lucide-react";
+import AdminAnalyticsTab from "@/components/admin/AdminAnalyticsTab";
+import AdminCloudTab from "@/components/admin/AdminCloudTab";
 
 interface UserProfile {
   id: string;
