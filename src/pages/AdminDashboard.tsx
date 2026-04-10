@@ -31,7 +31,7 @@ interface UserWebsite {
   published_url: string | null;
 }
 
-type Tab = "users" | "websites" | "activity";
+type Tab = "users" | "websites" | "activity" | "analytics" | "cloud";
 
 const AdminDashboard = () => {
   const [profiles, setProfiles] = useState<UserProfile[]>([]);
