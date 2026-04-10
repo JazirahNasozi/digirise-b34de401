@@ -5,8 +5,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
-  Sparkles, LogOut, Users, CheckCircle, XCircle, Globe, Shield, Loader2,
-  FileText, Eye, Trash2, BarChart3,
+  LogOut, Users, CheckCircle, XCircle, Globe, Shield, Loader2,
+  FileText, Eye, Trash2, BarChart3, Cloud,
 } from "lucide-react";
 
 interface UserProfile {
@@ -121,15 +121,22 @@ const AdminDashboard = () => {
       <header className="border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <Sparkles className="h-6 w-6 text-primary" />
+            <img src="/favicon.png" alt="DigiRise" className="h-6 w-6" />
             <span className="text-xl font-display font-bold">DigiRise</span>
             <span className="ml-2 text-xs font-semibold px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
               <Shield className="inline h-3 w-3 mr-1" />Admin
             </span>
           </div>
-          <Button variant="ghost" size="sm" onClick={handleLogout}>
-            <LogOut className="h-4 w-4 mr-2" /> Logout
-          </Button>
+          <div className="flex items-center gap-2">
+            <a href="https://lovable.dev/projects/6d5fd211-55df-4dbc-b0bf-484971f87cc3" target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="sm">
+                <Cloud className="h-4 w-4 mr-2" /> Cloud
+              </Button>
+            </a>
+            <Button variant="ghost" size="sm" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 mr-2" /> Logout
+            </Button>
+          </div>
         </div>
       </header>
 
