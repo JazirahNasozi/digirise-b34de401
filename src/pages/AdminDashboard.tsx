@@ -165,8 +165,8 @@ const AdminDashboard = () => {
         </div>
 
         {/* Tabs */}
-        <div className="mb-6 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-          <div className="flex items-center gap-1 bg-card rounded-lg border border-border p-1 w-fit min-w-full md:min-w-0">
+        <div className="mb-6 overflow-x-auto -mx-2 px-2 sm:-mx-4 sm:px-4 md:mx-0 md:px-0">
+          <div className="flex items-center gap-0.5 sm:gap-1 bg-card rounded-lg border border-border p-1 w-fit min-w-full md:min-w-0">
             {([
               { key: "analytics" as Tab, label: "Analytics", icon: BarChart3 },
               { key: "cloud" as Tab, label: "Cloud", icon: Database },
