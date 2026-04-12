@@ -165,24 +165,28 @@ const AdminDashboard = () => {
         </div>
 
         {/* Tabs */}
-        <div className="flex items-center gap-1 mb-6 bg-card rounded-lg border border-border p-1 w-fit">
-          {([
-            { key: "analytics" as Tab, label: "Analytics", icon: BarChart3 },
-            { key: "cloud" as Tab, label: "Cloud", icon: Database },
-            { key: "users" as Tab, label: "Users", icon: Users },
-            { key: "websites" as Tab, label: "Websites", icon: Globe },
-            { key: "activity" as Tab, label: "Activity", icon: BarChart3 },
-          ]).map(({ key, label, icon: Icon }) => (
-            <button
-              key={key}
-              onClick={() => setActiveTab(key)}
-              className={`flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium transition-all ${
-                activeTab === key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Icon className="h-4 w-4" /> {label}
-            </button>
-          ))}
+        <div className="mb-6 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
+          <div className="flex items-center gap-1 bg-card rounded-lg border border-border p-1 w-fit min-w-full md:min-w-0">
+            {([
+              { key: "analytics" as Tab, label: "Analytics", icon: BarChart3 },
+              { key: "cloud" as Tab, label: "Cloud", icon: Database },
+              { key: "users" as Tab, label: "Users", icon: Users },
+              { key: "websites" as Tab, label: "Websites", icon: Globe },
+              { key: "activity" as Tab, label: "Activity", icon: BarChart3 },
+            ]).map(({ key, label, icon: Icon }) => (
+              <button
+                key={key}
+                onClick={() => setActiveTab(key)}
+                className={`flex items-center gap-1 md:gap-1.5 px-2.5 md:px-4 py-2 rounded-md text-xs md:text-sm font-medium transition-all whitespace-nowrap ${
+                  activeTab === key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                <Icon className="h-3.5 w-3.5 md:h-4 md:w-4" />
+                <span className="hidden sm:inline">{label}</span>
+                <span className="sm:hidden">{label}</span>
+              </button>
+            ))}
+          </div>
         </div>
 
         {loading ? (
