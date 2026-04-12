@@ -47,12 +47,12 @@ const Index = () => {
             <a href="#templates" className="hover:text-foreground transition-colors">Templates</a>
             <a href="#features" className="hover:text-foreground transition-colors">Features</a>
           </nav>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 sm:gap-3">
             <Link to="/login">
-              <Button variant="ghost" size="sm">Sign In</Button>
+              <Button variant="ghost" size="sm" className="text-xs sm:text-sm px-2 sm:px-3">Sign In</Button>
             </Link>
             <Link to="/register">
-              <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90">
+              <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs sm:text-sm px-2 sm:px-3">
                 Get Started <ArrowRight className="ml-1 h-4 w-4" />
               </Button>
             </Link>

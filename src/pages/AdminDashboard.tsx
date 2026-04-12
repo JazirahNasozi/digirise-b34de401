@@ -121,22 +121,22 @@ const AdminDashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <img src="/favicon.png" alt="DigiRise" className="h-10 w-10" />
-            <span className="text-xl font-display font-bold">DigiRise</span>
-            <span className="ml-1 text-xs font-semibold px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
+        <div className="container mx-auto px-2 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-3 min-w-0 shrink-0">
+            <img src="/favicon.png" alt="DigiRise" className="h-8 w-8 sm:h-10 sm:w-10 shrink-0" />
+            <span className="hidden sm:inline text-xl font-display font-bold">DigiRise</span>
+            <span className="hidden md:inline ml-1 text-xs font-semibold px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
               <Shield className="inline h-3 w-3 mr-1" />Admin
             </span>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 shrink-0">
             <a href="https://lovable.dev/projects/6d5fd211-55df-4dbc-b0bf-484971f87cc3/cloud" target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" size="sm">
-                <Cloud className="h-4 w-4 mr-2" /> Cloud
+              <Button variant="outline" size="sm" className="px-2 sm:px-3">
+                <Cloud className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Cloud</span>
               </Button>
             </a>
-            <Button variant="ghost" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4 mr-2" /> Logout
+            <Button variant="ghost" size="sm" className="px-2 sm:px-3" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Logout</span>
             </Button>
           </div>
         </div>
@@ -144,8 +144,8 @@ const AdminDashboard = () => {
 
       <main className="container mx-auto px-4 py-8">
         <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-          <h1 className="text-3xl font-display font-bold mb-1">Admin Dashboard</h1>
-          <p className="text-muted-foreground mb-8">Platform management & analytics</p>
+          <h1 className="text-2xl sm:text-3xl font-display font-bold mb-1">Admin Dashboard</h1>
+          <p className="text-sm sm:text-base text-muted-foreground mb-8">Platform management & analytics</p>
         </motion.div>
 
         {/* Stats */}
@@ -165,8 +165,8 @@ const AdminDashboard = () => {
         </div>
 
         {/* Tabs */}
-        <div className="mb-6 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0">
-          <div className="flex items-center gap-1 bg-card rounded-lg border border-border p-1 w-fit min-w-full md:min-w-0">
+        <div className="mb-6 overflow-x-auto -mx-2 px-2 sm:-mx-4 sm:px-4 md:mx-0 md:px-0">
+          <div className="flex items-center gap-0.5 sm:gap-1 bg-card rounded-lg border border-border p-1 w-fit min-w-full md:min-w-0">
             {([
               { key: "analytics" as Tab, label: "Analytics", icon: BarChart3 },
               { key: "cloud" as Tab, label: "Cloud", icon: Database },
