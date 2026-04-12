@@ -123,7 +123,7 @@ const AdminDashboard = () => {
       <header className="border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-50">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-3xl font-display font-extrabold tracking-tight gold-text select-none">DR</span>
+            <img src="/favicon.png" alt="DigiRise" className="h-10 w-10" />
             <span className="text-xl font-display font-bold">DigiRise</span>
             <span className="ml-1 text-xs font-semibold px-2 py-1 rounded-full bg-primary/10 text-primary border border-primary/20">
               <Shield className="inline h-3 w-3 mr-1" />Admin
