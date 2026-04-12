@@ -72,17 +72,17 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border bg-card/80 backdrop-blur-md sticky top-0 z-50">
-        <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <img src="/favicon.png" alt="DigiRise" className="h-8 w-8" />
-            <span className="text-xl font-display font-bold">DigiRise</span>
+        <div className="container mx-auto px-2 sm:px-4 h-14 sm:h-16 flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 shrink-0">
+            <img src="/favicon.png" alt="DigiRise" className="h-7 w-7 sm:h-8 sm:w-8 shrink-0" />
+            <span className="text-base sm:text-xl font-display font-bold truncate">DigiRise</span>
           </div>
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" size="sm" onClick={() => navigate("/settings")}>
-              <Settings className="h-4 w-4 mr-2" /> Settings
+          <div className="flex items-center gap-1 sm:gap-3 shrink-0">
+            <Button variant="ghost" size="sm" className="px-2 sm:px-3" onClick={() => navigate("/settings")}>
+              <Settings className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Settings</span>
             </Button>
-            <Button variant="ghost" size="sm" onClick={handleLogout}>
-              <LogOut className="h-4 w-4 mr-2" /> Logout
+            <Button variant="ghost" size="sm" className="px-2 sm:px-3" onClick={handleLogout}>
+              <LogOut className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Logout</span>
             </Button>
           </div>
         </div>
