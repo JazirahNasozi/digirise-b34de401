@@ -70,9 +70,14 @@ const WebsiteRenderer = ({
         <span className="font-display font-bold text-lg" style={{ color: heroPrimaryFg }}>{name}</span>
         <div className="hidden sm:flex items-center gap-5 text-sm font-medium" style={{ color: heroPrimaryFg, opacity: 0.85 }}>
           {navLinks.map((link) => (
-            <a key={link as string} href={`#${(link as string).toLowerCase()}`} className="hover:opacity-100 transition-opacity">
+            <button
+              key={link as string}
+              onClick={() => scrollTo((link as string).toLowerCase())}
+              className="hover:opacity-100 transition-opacity cursor-pointer bg-transparent border-none p-0"
+              style={{ color: "inherit", font: "inherit" }}
+            >
               {link as string}
-            </a>
+            </button>
           ))}
         </div>
       </nav>
