@@ -301,13 +301,16 @@ const WebsiteRenderer = ({
               </a>
             )}
             {content.contact.address && (
-              <span className="flex items-center gap-2">
+              <a href={mapsUrl(content.contact.address)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-foreground transition-colors">
                 <MapPin className="h-4 w-4" /> {content.contact.address}
-              </span>
+              </a>
             )}
           </div>
-          {/* Simple contact prompt */}
-          <div className="mt-10 max-w-md mx-auto bg-muted/50 rounded-xl p-6 border border-border">
+          {/* Contact prompt - clickable */}
+          <a
+            href={content.contact.email ? `mailto:${content.contact.email}` : content.contact.phone ? `tel:${content.contact.phone}` : "#"}
+            className="block mt-10 max-w-md mx-auto bg-muted/50 rounded-xl p-6 border border-border hover:border-primary/40 transition-colors no-underline text-inherit"
+          >
             <MessageSquare className="h-8 w-8 mx-auto mb-3" style={{ color: accentColor }} />
             <p className="text-sm font-semibold mb-1">Send us a message</p>
             <p className="text-xs text-muted-foreground">
@@ -317,7 +320,7 @@ const WebsiteRenderer = ({
                 ? `Call us at ${content.contact.phone}`
                 : "Get in touch with us today"}
             </p>
-          </div>
+          </a>
         </section>
       )}
 
