@@ -39,6 +39,21 @@ Generate a complete, multi-page website structure with real, professional conten
     "heading": "About section title",
     "text": "2-3 paragraphs about the business, its history, mission, and values"
   },
+  "stats": [
+    { "value": "500+", "label": "Happy Clients" },
+    { "value": "10+", "label": "Years Experience" },
+    { "value": "50+", "label": "Projects Completed" },
+    { "value": "24/7", "label": "Support Available" }
+  ],
+  "whyChooseUs": {
+    "heading": "Why Choose [Business Name]?",
+    "items": [
+      { "title": "Advantage title", "description": "Why this matters", "icon": "award" },
+      { "title": "Advantage title", "description": "Why this matters", "icon": "shield" },
+      { "title": "Advantage title", "description": "Why this matters", "icon": "zap" },
+      { "title": "Advantage title", "description": "Why this matters", "icon": "heart" }
+    ]
+  },
   "services": {
     "heading": "Services section title",
     "items": [
@@ -81,6 +96,9 @@ Generate a complete, multi-page website structure with real, professional conten
     "description": "Meta description for SEO"
   }
 }
+
+For "stats", generate 4 realistic statistics relevant to a ${businessType} business. Use numbers that sound believable.
+For "whyChooseUs", generate 4 compelling advantages. Use icon values from: award, shield, zap, heart, clock, users, star, trending.
 
 Make ALL content professional, engaging, and specific to a ${businessType} business called "${businessName}". Use real-sounding content, not placeholder text. The hero heading MUST include the business name "${businessName}".`;
 
