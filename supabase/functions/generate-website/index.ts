@@ -224,7 +224,7 @@ Make ALL content professional, engaging, and specific to a ${businessType} busin
                     required: ["title", "description"],
                   },
                 },
-                required: ["hero", "about", "services", "contact", "seo", "faq", "blog"],
+                required: ["hero", "about", "services", "contact", "seo", "faq", "blog", "stats", "whyChooseUs"],
                 additionalProperties: false,
               },
             },
