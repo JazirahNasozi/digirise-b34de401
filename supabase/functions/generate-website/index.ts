@@ -132,6 +132,29 @@ Make ALL content professional, engaging, and specific to a ${businessType} busin
                     },
                     required: ["heading", "subheading"],
                   },
+                  stats: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: { value: { type: "string" }, label: { type: "string" } },
+                      required: ["value", "label"],
+                    },
+                  },
+                  whyChooseUs: {
+                    type: "object",
+                    properties: {
+                      heading: { type: "string" },
+                      items: {
+                        type: "array",
+                        items: {
+                          type: "object",
+                          properties: { title: { type: "string" }, description: { type: "string" }, icon: { type: "string" } },
+                          required: ["title", "description"],
+                        },
+                      },
+                    },
+                    required: ["heading", "items"],
+                  },
                   about: {
                     type: "object",
                     properties: { heading: { type: "string" }, text: { type: "string" } },
