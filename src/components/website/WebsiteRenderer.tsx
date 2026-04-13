@@ -35,6 +35,20 @@ const WebsiteRenderer = ({
     onContentChange?.(path, value);
   };
 
+  const ensureUrl = (url: string) => {
+    if (!url) return "";
+    const trimmed = url.trim();
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    return `https://${trimmed}`;
+  };
+
+  const mapsUrl = (address: string) =>
+    `https://www.google.com/maps/search/${encodeURIComponent(address)}`;
+
+  const scrollTo = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  };
+
   const heroStyle = { background: theme.heroGradient };
   const heroPrimaryFg = `hsl(${theme.primaryForeground})`;
   const accentColor = `hsl(${theme.primary})`;
