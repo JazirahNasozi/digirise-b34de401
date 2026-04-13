@@ -35,6 +35,20 @@ const WebsiteRenderer = ({
     onContentChange?.(path, value);
   };
 
+  const ensureUrl = (url: string) => {
+    if (!url) return "";
+    const trimmed = url.trim();
+    if (/^https?:\/\//i.test(trimmed)) return trimmed;
+    return `https://${trimmed}`;
+  };
+
+  const mapsUrl = (address: string) =>
+    `https://www.google.com/maps/search/${encodeURIComponent(address)}`;
+
+  const scrollTo = (id: string) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+  };
+
   const heroStyle = { background: theme.heroGradient };
   const heroPrimaryFg = `hsl(${theme.primaryForeground})`;
   const accentColor = `hsl(${theme.primary})`;
@@ -56,9 +70,14 @@ const WebsiteRenderer = ({
         <span className="font-display font-bold text-lg" style={{ color: heroPrimaryFg }}>{name}</span>
         <div className="hidden sm:flex items-center gap-5 text-sm font-medium" style={{ color: heroPrimaryFg, opacity: 0.85 }}>
           {navLinks.map((link) => (
-            <a key={link as string} href={`#${(link as string).toLowerCase()}`} className="hover:opacity-100 transition-opacity">
+            <button
+              key={link as string}
+              onClick={() => scrollTo((link as string).toLowerCase())}
+              className="hover:opacity-100 transition-opacity cursor-pointer bg-transparent border-none p-0"
+              style={{ color: "inherit", font: "inherit" }}
+            >
               {link as string}
-            </a>
+            </button>
           ))}
         </div>
       </nav>
@@ -282,13 +301,16 @@ const WebsiteRenderer = ({
               </a>
             )}
             {content.contact.address && (
-              <span className="flex items-center gap-2">
+              <a href={mapsUrl(content.contact.address)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 hover:text-foreground transition-colors">
                 <MapPin className="h-4 w-4" /> {content.contact.address}
-              </span>
+              </a>
             )}
           </div>
-          {/* Simple contact prompt */}
-          <div className="mt-10 max-w-md mx-auto bg-muted/50 rounded-xl p-6 border border-border">
+          {/* Contact prompt - clickable */}
+          <a
+            href={content.contact.email ? `mailto:${content.contact.email}` : content.contact.phone ? `tel:${content.contact.phone}` : "#"}
+            className="block mt-10 max-w-md mx-auto bg-muted/50 rounded-xl p-6 border border-border hover:border-primary/40 transition-colors no-underline text-inherit"
+          >
             <MessageSquare className="h-8 w-8 mx-auto mb-3" style={{ color: accentColor }} />
             <p className="text-sm font-semibold mb-1">Send us a message</p>
             <p className="text-xs text-muted-foreground">
@@ -298,7 +320,7 @@ const WebsiteRenderer = ({
                 ? `Call us at ${content.contact.phone}`
                 : "Get in touch with us today"}
             </p>
-          </div>
+          </a>
         </section>
       )}
 
@@ -311,17 +333,17 @@ const WebsiteRenderer = ({
         {socialLinks && (socialLinks.facebook || socialLinks.instagram || socialLinks.twitter) && (
           <div className="flex items-center justify-center gap-4 mb-4">
             {socialLinks.facebook && (
-              <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" style={{ color: "rgba(255,255,255,0.5)" }} className="hover:opacity-80 transition-opacity">
+              <a href={ensureUrl(socialLinks.facebook)} target="_blank" rel="noopener noreferrer" style={{ color: "rgba(255,255,255,0.5)" }} className="hover:opacity-80 transition-opacity">
                 <Facebook className="h-5 w-5" />
               </a>
             )}
             {socialLinks.instagram && (
-              <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" style={{ color: "rgba(255,255,255,0.5)" }} className="hover:opacity-80 transition-opacity">
+              <a href={ensureUrl(socialLinks.instagram)} target="_blank" rel="noopener noreferrer" style={{ color: "rgba(255,255,255,0.5)" }} className="hover:opacity-80 transition-opacity">
                 <Instagram className="h-5 w-5" />
               </a>
             )}
             {socialLinks.twitter && (
-              <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" style={{ color: "rgba(255,255,255,0.5)" }} className="hover:opacity-80 transition-opacity">
+              <a href={ensureUrl(socialLinks.twitter)} target="_blank" rel="noopener noreferrer" style={{ color: "rgba(255,255,255,0.5)" }} className="hover:opacity-80 transition-opacity">
                 <Twitter className="h-5 w-5" />
               </a>
             )}
