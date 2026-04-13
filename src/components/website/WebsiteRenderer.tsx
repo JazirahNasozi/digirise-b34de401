@@ -333,17 +333,17 @@ const WebsiteRenderer = ({
         {socialLinks && (socialLinks.facebook || socialLinks.instagram || socialLinks.twitter) && (
           <div className="flex items-center justify-center gap-4 mb-4">
             {socialLinks.facebook && (
-              <a href={socialLinks.facebook} target="_blank" rel="noopener noreferrer" style={{ color: "rgba(255,255,255,0.5)" }} className="hover:opacity-80 transition-opacity">
+              <a href={ensureUrl(socialLinks.facebook)} target="_blank" rel="noopener noreferrer" style={{ color: "rgba(255,255,255,0.5)" }} className="hover:opacity-80 transition-opacity">
                 <Facebook className="h-5 w-5" />
               </a>
             )}
             {socialLinks.instagram && (
-              <a href={socialLinks.instagram} target="_blank" rel="noopener noreferrer" style={{ color: "rgba(255,255,255,0.5)" }} className="hover:opacity-80 transition-opacity">
+              <a href={ensureUrl(socialLinks.instagram)} target="_blank" rel="noopener noreferrer" style={{ color: "rgba(255,255,255,0.5)" }} className="hover:opacity-80 transition-opacity">
                 <Instagram className="h-5 w-5" />
               </a>
             )}
             {socialLinks.twitter && (
-              <a href={socialLinks.twitter} target="_blank" rel="noopener noreferrer" style={{ color: "rgba(255,255,255,0.5)" }} className="hover:opacity-80 transition-opacity">
+              <a href={ensureUrl(socialLinks.twitter)} target="_blank" rel="noopener noreferrer" style={{ color: "rgba(255,255,255,0.5)" }} className="hover:opacity-80 transition-opacity">
                 <Twitter className="h-5 w-5" />
               </a>
             )}
