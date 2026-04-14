@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import ThemeToggle from "@/components/ThemeToggle";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -160,6 +161,7 @@ const AdminDashboard = () => {
             </span>
           </div>
           <div className="flex items-center gap-1 sm:gap-2 shrink-0">
+            <ThemeToggle />
             <a href="https://lovable.dev/projects/6d5fd211-55df-4dbc-b0bf-484971f87cc3/cloud" target="_blank" rel="noopener noreferrer">
               <Button variant="outline" size="sm" className="px-2 sm:px-3">
                 <Cloud className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Cloud</span>
