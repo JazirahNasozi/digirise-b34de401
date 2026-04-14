@@ -63,15 +63,24 @@ const AdminDashboard = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    const [profilesRes, websitesRes] = await Promise.all([
+    const [profilesRes, websitesRes, rolesRes] = await Promise.all([
       supabase.from("profiles").select("id, user_id, business_name, business_type, payment_confirmed, payment_confirmed_at, created_at"),
       supabase.from("websites").select("id, name, status, user_id, created_at, published_url"),
+      supabase.from("user_roles").select("user_id, role"),
     ]);
+    const rolesMap: Record<string, "admin" | "user"> = {};
+    if (rolesRes.data) {
+      for (const r of rolesRes.data) {
+        // If user has admin role, mark as admin; otherwise user
+        if (r.role === "admin") rolesMap[r.user_id] = "admin";
+        else if (!rolesMap[r.user_id]) rolesMap[r.user_id] = r.role as "admin" | "user";
+      }
+    }
     if (profilesRes.data) {
       const profilesWithEmails = await Promise.all(
         profilesRes.data.map(async (p: any) => {
           const { data } = await supabase.rpc("get_user_email", { _user_id: p.user_id });
-          return { ...p, email: data || "Unknown" };
+          return { ...p, email: data || "Unknown", role: rolesMap[p.user_id] || "user" };
         })
       );
       setProfiles(profilesWithEmails);
