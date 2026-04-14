@@ -20,6 +20,7 @@ interface UserProfile {
   payment_confirmed_at: string | null;
   created_at: string;
   email?: string;
+  role?: "admin" | "user";
 }
 
 interface UserWebsite {
