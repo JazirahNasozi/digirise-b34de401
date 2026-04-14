@@ -106,7 +106,7 @@ const WebsiteRenderer = ({
   return (
     <div className="bg-background rounded-xl border border-border overflow-hidden">
       {/* ═══════════ STICKY NAV ═══════════ */}
-      <nav className="relative z-50 px-4 sm:px-6 py-3 flex items-center justify-between border-b border-white/10" style={{ background: theme.heroGradient }}>
+      <nav className="sticky top-0 z-50 px-4 sm:px-6 py-3 flex items-center justify-between backdrop-blur-md border-b border-white/10" style={{ background: theme.heroGradient }}>
         <button onClick={() => scrollTo("home")} className="flex items-center gap-2 bg-transparent border-none cursor-pointer p-0">
           <span className="font-display font-bold text-lg sm:text-xl" style={{ color: heroPrimaryFg }}>{name}</span>
         </button>
