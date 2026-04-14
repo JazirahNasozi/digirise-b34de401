@@ -304,9 +304,24 @@ const AdminDashboard = () => {
                         }
                       </div>
                       <div className="text-xs text-muted-foreground">{p.business_name || "No business"} · {getUserWebsiteCount(p.user_id)} sites</div>
-                      <Button size="sm" variant={p.payment_confirmed ? "outline" : "default"} className="w-full" disabled={toggling === p.id} onClick={() => togglePayment(p)}>
-                        {toggling === p.id ? <Loader2 className="h-3 w-3 animate-spin" /> : p.payment_confirmed ? "Revoke" : "Confirm Payment"}
-                      </Button>
+                      <div className="flex gap-2">
+                        <Select
+                          value={p.role || "user"}
+                          onValueChange={(val) => changeRole(p, val as "admin" | "user")}
+                          disabled={toggling === p.id + "-role"}
+                        >
+                          <SelectTrigger className="w-24 h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="user">User</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button size="sm" variant={p.payment_confirmed ? "outline" : "default"} className="flex-1" disabled={toggling === p.id} onClick={() => togglePayment(p)}>
+                          {toggling === p.id ? <Loader2 className="h-3 w-3 animate-spin" /> : p.payment_confirmed ? "Revoke" : "Confirm Payment"}
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
