@@ -117,6 +117,23 @@ const AdminDashboard = () => {
     }
   };
 
+  const changeRole = async (profile: UserProfile, newRole: "admin" | "user") => {
+    if (profile.role === newRole) return;
+    setToggling(profile.id + "-role");
+    // Update existing role row
+    const { error } = await supabase
+      .from("user_roles")
+      .update({ role: newRole })
+      .eq("user_id", profile.user_id);
+    if (error) {
+      toast({ title: "Failed to change role", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: `Role changed to ${newRole}` });
+      setProfiles((prev) => prev.map((p) => p.user_id === profile.user_id ? { ...p, role: newRole } : p));
+    }
+    setToggling(null);
+  };
+
   const handleLogout = async () => { await supabase.auth.signOut(); navigate("/"); };
   const getUserWebsiteCount = (userId: string) => websites.filter((w) => w.user_id === userId).length;
   const getUserEmail = (userId: string) => profiles.find((p) => p.user_id === userId)?.email || "Unknown";
