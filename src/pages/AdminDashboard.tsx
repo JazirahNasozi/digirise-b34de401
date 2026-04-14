@@ -10,6 +10,9 @@ import {
 } from "lucide-react";
 import AdminAnalyticsTab from "@/components/admin/AdminAnalyticsTab";
 import AdminCloudTab from "@/components/admin/AdminCloudTab";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 
 interface UserProfile {
   id: string;
@@ -20,6 +23,7 @@ interface UserProfile {
   payment_confirmed_at: string | null;
   created_at: string;
   email?: string;
+  role?: "admin" | "user";
 }
 
 interface UserWebsite {
@@ -62,15 +66,24 @@ const AdminDashboard = () => {
 
   const fetchData = async () => {
     setLoading(true);
-    const [profilesRes, websitesRes] = await Promise.all([
+    const [profilesRes, websitesRes, rolesRes] = await Promise.all([
       supabase.from("profiles").select("id, user_id, business_name, business_type, payment_confirmed, payment_confirmed_at, created_at"),
       supabase.from("websites").select("id, name, status, user_id, created_at, published_url"),
+      supabase.from("user_roles").select("user_id, role"),
     ]);
+    const rolesMap: Record<string, "admin" | "user"> = {};
+    if (rolesRes.data) {
+      for (const r of rolesRes.data) {
+        // If user has admin role, mark as admin; otherwise user
+        if (r.role === "admin") rolesMap[r.user_id] = "admin";
+        else if (!rolesMap[r.user_id]) rolesMap[r.user_id] = r.role as "admin" | "user";
+      }
+    }
     if (profilesRes.data) {
       const profilesWithEmails = await Promise.all(
         profilesRes.data.map(async (p: any) => {
           const { data } = await supabase.rpc("get_user_email", { _user_id: p.user_id });
-          return { ...p, email: data || "Unknown" };
+          return { ...p, email: data || "Unknown", role: rolesMap[p.user_id] || "user" };
         })
       );
       setProfiles(profilesWithEmails);
@@ -105,6 +118,23 @@ const AdminDashboard = () => {
       setWebsites((prev) => prev.filter((w) => w.id !== id));
       toast({ title: "Website deleted" });
     }
+  };
+
+  const changeRole = async (profile: UserProfile, newRole: "admin" | "user") => {
+    if (profile.role === newRole) return;
+    setToggling(profile.id + "-role");
+    // Update existing role row
+    const { error } = await supabase
+      .from("user_roles")
+      .update({ role: newRole })
+      .eq("user_id", profile.user_id);
+    if (error) {
+      toast({ title: "Failed to change role", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: `Role changed to ${newRole}` });
+      setProfiles((prev) => prev.map((p) => p.user_id === profile.user_id ? { ...p, role: newRole } : p));
+    }
+    setToggling(null);
   };
 
   const handleLogout = async () => { await supabase.auth.signOut(); navigate("/"); };
@@ -215,6 +245,7 @@ const AdminDashboard = () => {
                       <tr className="border-b border-border bg-muted/50">
                         <th className="text-left p-4 font-semibold">Email</th>
                         <th className="text-left p-4 font-semibold">Business</th>
+                        <th className="text-left p-4 font-semibold">Role</th>
                         <th className="text-left p-4 font-semibold">Sites</th>
                         <th className="text-left p-4 font-semibold">Joined</th>
                         <th className="text-left p-4 font-semibold">Payment</th>
@@ -226,6 +257,21 @@ const AdminDashboard = () => {
                         <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                           <td className="p-4 font-medium">{p.email}</td>
                           <td className="p-4 text-muted-foreground">{p.business_name || "—"}</td>
+                          <td className="p-4">
+                            <Select
+                              value={p.role || "user"}
+                              onValueChange={(val) => changeRole(p, val as "admin" | "user")}
+                              disabled={toggling === p.id + "-role"}
+                            >
+                              <SelectTrigger className="w-24 h-8 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="user">User</SelectItem>
+                                <SelectItem value="admin">Admin</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </td>
                           <td className="p-4">
                             <span className="bg-primary/10 text-primary text-xs font-semibold px-2 py-1 rounded-full">{getUserWebsiteCount(p.user_id)}</span>
                           </td>
@@ -258,9 +304,24 @@ const AdminDashboard = () => {
                         }
                       </div>
                       <div className="text-xs text-muted-foreground">{p.business_name || "No business"} · {getUserWebsiteCount(p.user_id)} sites</div>
-                      <Button size="sm" variant={p.payment_confirmed ? "outline" : "default"} className="w-full" disabled={toggling === p.id} onClick={() => togglePayment(p)}>
-                        {toggling === p.id ? <Loader2 className="h-3 w-3 animate-spin" /> : p.payment_confirmed ? "Revoke" : "Confirm Payment"}
-                      </Button>
+                      <div className="flex gap-2">
+                        <Select
+                          value={p.role || "user"}
+                          onValueChange={(val) => changeRole(p, val as "admin" | "user")}
+                          disabled={toggling === p.id + "-role"}
+                        >
+                          <SelectTrigger className="w-24 h-8 text-xs">
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="user">User</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Button size="sm" variant={p.payment_confirmed ? "outline" : "default"} className="flex-1" disabled={toggling === p.id} onClick={() => togglePayment(p)}>
+                          {toggling === p.id ? <Loader2 className="h-3 w-3 animate-spin" /> : p.payment_confirmed ? "Revoke" : "Confirm Payment"}
+                        </Button>
+                      </div>
                     </div>
                   ))}
                 </div>
