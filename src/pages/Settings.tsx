@@ -18,6 +18,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Sparkles, ArrowLeft, Save, Mail, Lock, User, Trash2 } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 
 const Settings = () => {
   const [email, setEmail] = useState("");
@@ -91,9 +92,12 @@ const Settings = () => {
             <img src="/favicon.png" alt="DigiRise" className="h-8 w-8" />
             <span className="text-xl font-display font-bold">DigiRise</span>
           </div>
-          <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>
-            <ArrowLeft className="h-4 w-4 mr-2" /> Dashboard
-          </Button>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            <Button variant="ghost" size="sm" onClick={() => navigate("/dashboard")}>
+              <ArrowLeft className="h-4 w-4 mr-2" /> Dashboard
+            </Button>
+          </div>
         </div>
       </header>
 

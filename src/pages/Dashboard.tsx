@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import ThemeToggle from "@/components/ThemeToggle";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
@@ -78,6 +79,7 @@ const Dashboard = () => {
             <span className="text-base sm:text-xl font-display font-bold truncate">DigiRise</span>
           </div>
           <div className="flex items-center gap-1 sm:gap-3 shrink-0">
+            <ThemeToggle />
             <Button variant="ghost" size="sm" className="px-2 sm:px-3" onClick={() => navigate("/settings")}>
               <Settings className="h-4 w-4 sm:mr-2" /> <span className="hidden sm:inline">Settings</span>
             </Button>

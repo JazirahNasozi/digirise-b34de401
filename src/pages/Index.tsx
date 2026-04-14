@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import ThemeToggle from "@/components/ThemeToggle";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
@@ -48,6 +49,7 @@ const Index = () => {
             <a href="#features" className="hover:text-foreground transition-colors">Features</a>
           </nav>
           <div className="flex items-center gap-1 sm:gap-3">
+            <ThemeToggle />
             <Link to="/login">
               <Button variant="ghost" size="sm" className="text-xs sm:text-sm px-2 sm:px-3">Sign In</Button>
             </Link>
