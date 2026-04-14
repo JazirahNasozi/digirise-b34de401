@@ -10,6 +10,9 @@ import {
 } from "lucide-react";
 import AdminAnalyticsTab from "@/components/admin/AdminAnalyticsTab";
 import AdminCloudTab from "@/components/admin/AdminCloudTab";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
 
 interface UserProfile {
   id: string;
