@@ -245,6 +245,7 @@ const AdminDashboard = () => {
                       <tr className="border-b border-border bg-muted/50">
                         <th className="text-left p-4 font-semibold">Email</th>
                         <th className="text-left p-4 font-semibold">Business</th>
+                        <th className="text-left p-4 font-semibold">Role</th>
                         <th className="text-left p-4 font-semibold">Sites</th>
                         <th className="text-left p-4 font-semibold">Joined</th>
                         <th className="text-left p-4 font-semibold">Payment</th>
@@ -256,6 +257,21 @@ const AdminDashboard = () => {
                         <tr key={p.id} className="border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                           <td className="p-4 font-medium">{p.email}</td>
                           <td className="p-4 text-muted-foreground">{p.business_name || "—"}</td>
+                          <td className="p-4">
+                            <Select
+                              value={p.role || "user"}
+                              onValueChange={(val) => changeRole(p, val as "admin" | "user")}
+                              disabled={toggling === p.id + "-role"}
+                            >
+                              <SelectTrigger className="w-24 h-8 text-xs">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="user">User</SelectItem>
+                                <SelectItem value="admin">Admin</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </td>
                           <td className="p-4">
                             <span className="bg-primary/10 text-primary text-xs font-semibold px-2 py-1 rounded-full">{getUserWebsiteCount(p.user_id)}</span>
                           </td>
